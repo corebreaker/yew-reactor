@@ -56,7 +56,7 @@ impl CucumberTest for CssClasses {
 
 #[given(expr = "a created runtime instance")]
 fn given_context(world: &mut CssClasses) {
-    world.rt.replace(Runtime::new_with_spawn_generator(FuturesSpawner));
+    world.rt.replace(Runtime::new_with_spawn_generator(FuturesSpawner::new()));
 }
 
 #[given(expr = "the created runtime instance (copy of the reference to the runtime instance)")]

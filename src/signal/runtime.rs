@@ -5,6 +5,7 @@ use std::{
     collections::{HashMap, HashSet},
     fmt::{Debug, Formatter},
     cell::{RefCell, Cell},
+    panic::UnwindSafe,
     future::Future,
     sync::Arc,
     any::Any,
@@ -41,7 +42,7 @@ impl Runtime {
         &self.spawner
     }
 
-    pub(crate) fn spawn<F: Future<Output = ()> + 'static>(&self, f: F) {
+    pub(crate) fn spawn<F: Future<Output = ()> + UnwindSafe + 'static>(&self, f: F) {
         self.spawner.spawn(f)
     }
 

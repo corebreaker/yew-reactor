@@ -1,4 +1,5 @@
-use std::{task::{Context, Poll}, pin::Pin, future::Future};
+use futures::FutureExt;
+use std::{task::{Context, Poll}, pin::Pin, future::Future, panic::UnwindSafe};
 
 pub type FutureVoid = LocalFuture<()>;
 
@@ -7,9 +8,9 @@ pub struct LocalFuture<O> {
 }
 
 impl<O> LocalFuture<O> {
-    pub fn new<F: Future<Output = O> + 'static>(f: F) -> Self {
+    pub fn new<F: Future<Output = O> + UnwindSafe + 'static>(f: F) -> Self {
         Self {
-            future: Box::pin(f),
+            future: Box::pin(f.catch_unwind()),
         }
     }
 }

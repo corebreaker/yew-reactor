@@ -1,5 +1,5 @@
 use super::{keyed_signal_kind::KeyedSignalKind, collection::Collection, value::Value};
-use yew_reactor::{signal::{Signal, Runtime}, spawner::generators::FuturesSpawner};
+use yew_reactor::{signal::{Signal, Runtime}, spawner::generators::TaskSpawner};
 use cucumber_trellis::CucumberTest;
 use cucumber::{given, then, when, World};
 use std::{cell::{RefCell, Cell}, sync::Arc};
@@ -78,7 +78,7 @@ impl MemoFunctions {
 
 #[given(expr = "a created runtime instance")]
 fn given_context(world: &mut MemoFunctions) {
-    world.rt.replace(Runtime::new_with_spawn_generator(FuturesSpawner));
+    world.rt.replace(Runtime::new_with_spawn_generator(TaskSpawner::new()));
 }
 
 #[given(expr = "a signal is created from the runtime instance")]

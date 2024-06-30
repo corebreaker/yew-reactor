@@ -82,7 +82,7 @@ fn given_async_func_with_return_value(world: &mut Actions) {
     let condition = world.condition();
     let lock = world.lock();
 
-    world.rt().spawner().set_generator(TaskSpawner);
+    world.rt().spawner().set_generator(TaskSpawner::default());
     world.func.replace(Function::new("value", move || {
         let condition = Arc::clone(&condition);
         let lock = Arc::clone(&lock);

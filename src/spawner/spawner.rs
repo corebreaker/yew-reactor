@@ -1,5 +1,5 @@
 use super::{generators::default::DefaultSpawner, SpawnGenerator, FutureVoid};
-use std::{future::Future, cell::RefCell};
+use std::{future::Future, cell::RefCell, panic::UnwindSafe};
 
 #[derive(Default)]
 pub struct Spawner(RefCell<Option<Box<dyn SpawnGenerator>>>);
@@ -17,7 +17,7 @@ impl Spawner {
         self.0.borrow_mut().replace(Box::new(generator));
     }
 
-    pub fn spawn<F: Future<Output = ()> + 'static>(&self, f: F) {
+    pub fn spawn<F: Future<Output = ()> + UnwindSafe + 'static>(&self, f: F) {
         if self.has_no_generator() {
             self.set_generator(DefaultSpawner);
         }
