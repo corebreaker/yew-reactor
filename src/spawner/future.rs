@@ -1,5 +1,6 @@
+use crate::backtrace::get_backtrace;
 use futures::FutureExt;
-use std::{task::{Context, Poll}, pin::Pin, future::Future, panic::UnwindSafe};
+use std::{task::{Context, Poll}, pin::Pin, future::Future, panic::UnwindSafe, any::Any};
 
 pub type FutureVoid = LocalFuture<()>;
 
@@ -10,7 +11,24 @@ pub struct LocalFuture<O> {
 impl<O> LocalFuture<O> {
     pub fn new<F: Future<Output = O> + UnwindSafe + 'static>(f: F) -> Self {
         Self {
-            future: Box::pin(f.catch_unwind()),
+            future: Box::pin(async {
+                match f.catch_unwind().await {
+                    Ok(v) => v,
+                    Err(err) => {
+                        let message = match err.downcast_ref::<&str>() {
+                            Some(err) => format!("Panic: {err}"),
+                            None => match err.downcast_ref::<String>() {
+                                Some(err) => format!("Panic: {err}"),
+                                None => format!("Panicking for any reason with type {:?}", err.type_id()),
+                            }
+                        };
+
+                        let backtrace = get_backtrace(2);
+
+                        panic!("{message}\n{backtrace:?}");
+                    }
+                }
+            }),
         }
     }
 }
@@ -25,3 +43,5 @@ impl<O> Future for LocalFuture<O> {
 
 unsafe impl<O> Send for LocalFuture<O> {}
 unsafe impl<O> Sync for LocalFuture<O> {}
+
+impl<O> UnwindSafe for LocalFuture<O> {}

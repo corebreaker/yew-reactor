@@ -1,4 +1,3 @@
-use futures::FutureExt;
 use crate::spawner::{SpawnGenerator, FutureVoid};
 use tokio::spawn;
 

@@ -17,13 +17,13 @@ Feature: Memo function for Yew
       When the memo function is created
       Then the function is called to get the initial value
 
-    Scenario: A memo function which consume a signal won't notify subscribers when the signal sets an unchanged value
+    Scenario: The memo function which consume a signal will notify subscribers when the signal value changes
       Given the signal created from a memo function with an initialized value which is computed from the signal
       When the signal value has changed
       Then the function is called to get the value from the signal
         And the signal notifies its subscribers with the new value
 
-    Scenario: The memo function which consume a signal will notify subscribers when the signal value changes
+    Scenario: A memo function which consume a signal won't notify subscribers when the signal sets an unchanged value
       Given the signal created from a memo function with an initialized value which is computed from the signal
       When the same value is set to the signal
       Then the function is called to get the value from the signal

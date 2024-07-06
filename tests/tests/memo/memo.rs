@@ -1,4 +1,4 @@
-use super::{keyed_signal_kind::KeyedSignalKind, collection::Collection, value::Value};
+use super::{keyed_signal_kind::KeyedSignalKind, collection::Collection, value::Value, function::Function};
 use yew_reactor::{signal::{Signal, Runtime}, spawner::generators::TaskSpawner};
 use cucumber_trellis::CucumberTest;
 use cucumber::{given, then, when, World};
@@ -11,6 +11,8 @@ pub(in super::super::super) struct MemoFunctions {
     rt: Option<Arc<Runtime>>,
     signal: Option<Signal<String>>,
     value: Option<Arc<RefCell<String>>>,
+    last_value: Option<Arc<RefCell<String>>>,
+    function: Option<Function>,
     update_counter: Option<Arc<Cell<usize>>>,
     call_counter: Option<Arc<Cell<usize>>>,
     call_flag: Option<Arc<Cell<bool>>>,
@@ -37,6 +39,14 @@ impl MemoFunctions {
 
     fn value(&self) -> Arc<RefCell<String>> {
         self.value.as_ref().cloned().expect("Value signal not set")
+    }
+
+    fn last_value(&self) -> Arc<RefCell<String>> {
+        self.last_value.as_ref().cloned().expect("Last value not set")
+    }
+
+    fn function(&self) -> Function {
+        self.function.as_ref().cloned().expect("Function not set")
     }
 
     fn update_counter(&self) -> Arc<Cell<usize>> {
@@ -86,8 +96,8 @@ fn given_signal(world: &mut MemoFunctions) {
     world.signal.replace(world.rt().create_signal(String::from("any-value")));
 }
 
-#[when(expr = "the memo function is created")]
-fn when_memo_function_is_created(world: &mut MemoFunctions) {
+#[given(expr = "a function that returns a value")]
+fn given_a_function_that_returns_a_value(world: &mut MemoFunctions) {
     let call_counter = Arc::new(Cell::new(0));
     let call_flag = Arc::new(Cell::new(false));
 
@@ -95,12 +105,19 @@ fn when_memo_function_is_created(world: &mut MemoFunctions) {
     world.call_flag.replace(Arc::clone(&call_flag));
 
     let signal = world.signal();
-    world.rt().create_memo(move |value: Option<&String>| {
+    world.function.replace(Function::new(move |value: Option<&String>| {
         call_counter.set(call_counter.get() + 1);
         call_flag.set(value.is_none());
 
         signal.get()
-    });
+    }));
+}
+
+#[when(expr = "the memo function is created")]
+fn when_memo_function_is_created(world: &mut MemoFunctions) {
+    let function = world.function().get();
+
+    world.rt().create_memo(move |value| function(value));
 }
 
 #[then(expr = "the function is called to get the initial value")]
@@ -114,16 +131,32 @@ fn given_signal_created_from_memo_function(world: &mut MemoFunctions) {
     let update_counter = Arc::new(Cell::new(0));
     let call_counter = Arc::new(Cell::new(0));
     let call_flag = Arc::new(Cell::new(false));
+    let last_value = Arc::new(RefCell::new(String::from("<No value>")));
     let arg_value = Some(String::from("any-value"));
 
     world.update_counter.replace(Arc::clone(&update_counter));
     world.call_counter.replace(Arc::clone(&call_counter));
     world.call_flag.replace(Arc::clone(&call_flag));
+    world.last_value.replace(Arc::clone(&last_value));
 
     let signal = world.signal();
     let memo = world.rt().create_memo(move |value: Option<&String>| {
         call_counter.set(call_counter.get() + 1);
         call_flag.set(value == arg_value.as_ref());
+
+        {
+            let mut last_value = last_value.borrow_mut();
+
+            match value.as_ref() {
+                None => {
+                    *last_value = String::from("<No value>");
+                }
+                Some(value) => {
+                    last_value.push_str("/");
+                    last_value.push_str(value);
+                }
+            }
+        }
 
         signal.get()
     });
@@ -141,18 +174,24 @@ fn given_signal_created_from_memo_function(world: &mut MemoFunctions) {
 
 #[when(expr = "the signal value has changed")]
 fn when_signal_value_has_changed(world: &mut MemoFunctions) {
-    world.signal().set(String::from("any-value"));
+    world.signal().set(String::from("new-value"));
 }
 
 #[when(expr = "the same value is set to the signal")]
 fn when_same_value_is_set_to_signal(world: &mut MemoFunctions) {
-    world.signal().set(String::from("new-value"));
+    world.signal().set(String::from("any-value"));
 }
 
 #[then(expr = "the function is called to get the value from the signal")]
 fn then_function_is_called_to_get_value_from_signal(world: &mut MemoFunctions) {
-    assert!(!world.call_flag().get(), "function should be called with the new value");
-    assert_eq!(world.call_counter().get(), 2, "function should be called twice");
+    let last_value = world.last_value().borrow().clone();
+
+    assert!(world.call_flag().get(), "function should be called with the initial value: last value={last_value}");
+    assert_eq!(
+        world.call_counter().get(),
+        2,
+        "function should be called twice, with the initial value and with the value set to the signal",
+    );
 }
 
 #[then(expr = "the signal notifies its subscribers with the new value")]

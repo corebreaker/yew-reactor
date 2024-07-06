@@ -1,9 +1,15 @@
 use super::{id::SignalId, Runtime};
-use std::{fmt::{Display, Debug, Formatter, Result as FmtResult}, marker::PhantomData, sync::Arc};
+use std::{
+    fmt::{Display, Debug, Formatter, Result as FmtResult},
+    sync::atomic::{AtomicBool, Ordering},
+    marker::PhantomData,
+    sync::Arc,
+};
 
 pub struct Signal<T: 'static> {
     runtime: Arc<Runtime>,
     id: SignalId,
+    registered: AtomicBool,
     ty: PhantomData<T>,
 }
 
@@ -14,6 +20,7 @@ impl<T: 'static> Signal<T> {
         Self {
             runtime,
             id,
+            registered: AtomicBool::new(false),
             ty: PhantomData,
         }
     }
@@ -38,12 +45,18 @@ impl<T: 'static> Signal<T> {
         let runtime = self.runtime();
 
         // add subscribers
-        runtime.add_subscriber(self.id);
+        if !self.registered.fetch_or(true, Ordering::SeqCst) {
+            runtime.add_subscriber(self.id);
+        }
 
         // get value
-        let signal_id = runtime.fetch_linked_signal_id(&self.id);
-        let values = runtime.get_signal_values().borrow();
-        let value = values[&signal_id].borrow();
+        let value_ref = {
+            let signal_id = runtime.get_source_id(self.id);
+
+            runtime.get_value(&signal_id)
+        };
+
+        let value = value_ref.read().unwrap();
         let signal_value = value.downcast_ref::<T>().unwrap();
 
         // return value
@@ -62,9 +75,13 @@ impl<T: 'static> Signal<T> {
 
         // set value
         {
-            let id = runtime.fetch_linked_signal_id(&id);
-            let values = runtime.get_signal_values().borrow();
-            let mut value = values[&id].borrow_mut();
+            let value_ref = {
+                let signal_id = runtime.get_source_id(id);
+
+                runtime.get_value(&signal_id)
+            };
+
+            let mut value = value_ref.write().unwrap();
             let signal_value = value.downcast_mut::<T>().unwrap();
 
             f(signal_value);
@@ -77,12 +94,16 @@ impl<T: 'static> Signal<T> {
     }
 
     pub fn untracked_update(&self, f: impl FnOnce(&mut T)) {
-        let runtime = self.runtime();
-        let values = runtime.get_signal_values().borrow();
-        let mut value = values[&self.id].borrow_mut();
+        let value_ref = {
+            let runtime = self.runtime();
+            let signal_id = runtime.get_source_id(self.id);
+
+            runtime.get_value(&signal_id)
+        };
+
+        let mut value = value_ref.write().unwrap();
         let signal_value = value.downcast_mut::<T>().unwrap();
 
-        // set value
         f(signal_value);
     }
 
@@ -92,8 +113,13 @@ impl<T: 'static> Signal<T> {
 
         // set value
         let should_notify = {
-            let values = runtime.get_signal_values().borrow();
-            let mut value = values[&id].borrow_mut();
+            let value_ref = {
+                let signal_id = runtime.get_source_id(id);
+
+                runtime.get_value(&signal_id)
+            };
+
+            let mut value = value_ref.write().unwrap();
             let signal_value = value.downcast_mut::<T>().unwrap();
 
             f(signal_value)
@@ -135,9 +161,9 @@ impl<T: Clone + 'static> Signal<T> {
         let runtime = self.runtime();
 
         // get value
-        let signal_id = runtime.fetch_linked_signal_id(&self.id);
-        let values = runtime.get_signal_values().borrow();
-        let value = values[&signal_id].borrow();
+        let signal_id = runtime.get_source_id(self.id);
+        let value_ref = runtime.get_value(&signal_id);
+        let value = value_ref.read().unwrap();
 
         // return value
         value.downcast_ref::<T>().unwrap().clone()
@@ -223,5 +249,15 @@ mod tests {
             7,
             "signal value should be equal to the created linked signal value with direct getter",
         );
+    }
+
+    #[test]
+    fn test_combine_signal() {
+        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let signal1 = Arc::clone(&rt).create_signal(1);
+        let signal2 = Arc::clone(&rt).create_signal(2);
+        let result = signal1.with_another(signal2, |v1, v2| v1 + v2);
+
+        assert_eq!(result, 3, "signal value should be equal to the sum of the two signals");
     }
 }

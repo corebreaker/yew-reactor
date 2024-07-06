@@ -1,6 +1,6 @@
 use crate::signal::{Runtime, Signal};
 use itertools::Itertools;
-use std::{fmt::{Debug, Formatter, Result as FmtResult}, collections::HashSet, sync::Arc, cell::RefCell};
+use std::{fmt::{Debug, Formatter, Result as FmtResult}, collections::HashSet, sync::{Arc, Mutex}};
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct CssClasses {
@@ -66,10 +66,10 @@ impl CssClasses {
 
     pub fn register_class_signal(&self, signal: Signal<String>) {
         let classes = self.clone();
-        let old = RefCell::new(String::new());
+        let old = Mutex::new(String::new());
 
         self.runtime().create_effect(move || {
-            let mut old = old.borrow_mut();
+            let mut old = old.lock().unwrap();
             let old_value = old.clone();
             let new_value = signal.with(|v| {
                 *old = v.clone();

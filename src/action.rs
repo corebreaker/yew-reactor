@@ -1,29 +1,32 @@
 use super::signal::{Runtime, Signal};
-use crate::id_generator::new_id;
+use crate::{spawner::LocalFuture, id_generator::new_id};
 use uuid::Uuid;
-use std::{fmt::{Debug, Formatter, Result as FmtResult}, sync::{Mutex, Arc}, future::Future, pin::Pin, rc::Rc};
+use std::{
+    fmt::{Debug, Formatter, Result as FmtResult},
+    sync::{Mutex, Arc},
+    panic::UnwindSafe,
+    future::Future,
+    rc::Rc,
+};
 
 #[derive(Clone)]
-pub struct Action<I, O: 'static> {
+pub struct Action<I, O: UnwindSafe + 'static> {
     id: Uuid,
     runtime: Arc<Runtime>,
     pending: Signal<bool>,
     lock: Arc<Mutex<()>>,
     value: Signal<Option<O>>,
-    action_fn: Rc<dyn Fn(I) -> Pin<Box<dyn Future<Output = O>>>>,
+    action_fn: Rc<dyn Fn(I) -> LocalFuture<O>>,
 }
 
-impl<I, O: 'static> Action<I, O> {
+impl<I, O: UnwindSafe + 'static> Action<I, O> {
     pub(crate) fn new<R, F>(runtime: Arc<Runtime>, action_fn: F) -> Self
-        where R: Future<Output = O> + 'static, F: Fn(I) -> R + 'static {
+        where R: Future<Output = O> + UnwindSafe + 'static, F: Fn(I) -> R + 'static {
         let id = new_id();
         let pending = Arc::clone(&runtime).create_signal(false);
         let value = Arc::clone(&runtime).create_signal(None::<O>);
         let lock = Arc::new(Mutex::new(()));
-        let action_fn = Rc::new(move |input: I| {
-            let fut = action_fn(input);
-            Box::pin(fut) as Pin<Box<dyn Future<Output = O>>>
-        });
+        let action_fn = Rc::new(move |input: I| LocalFuture::new(action_fn(input)));
 
         Self {
             id,
@@ -92,13 +95,13 @@ impl<I, O: 'static> Action<I, O> {
     }
 }
 
-impl<I, O: Clone + 'static> Action<I, O> {
+impl<I, O: Clone + UnwindSafe + 'static> Action<I, O> {
     pub fn get(&self) -> Option<O> {
         self.value.get()
     }
 }
 
-impl<I, O> Debug for Action<I, O> {
+impl<I, O: UnwindSafe> Debug for Action<I, O> {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "Action[{}; pending: {}]", self.id, self.is_pending())
     }

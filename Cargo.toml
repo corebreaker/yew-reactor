@@ -8,7 +8,7 @@ name = "cucumber"
 harness = false
 
 [dependencies]
-cucumber = "0.21.1"
+backtrace = "0.3.73"
 itertools = "0.13.0"
 futures = "0.3.30"
 uuid = { version = "1.8", features = ["atomic", "v4", "v7", "serde"] }
@@ -16,4 +16,5 @@ yew = { version = "0.21", features = ["csr"] }
 tokio = { version = "1.38.0", features = ["full"] }
 
 [dev-dependencies]
-cucumber-trellis = { version = "0.1.3", features = ["macro"] }
+cucumber = "0.21.1"
+cucumber-trellis = { version = "0.1.4", features = ["macro"] }
