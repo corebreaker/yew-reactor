@@ -5,7 +5,7 @@ Feature: A struct exists as an helper for managing CSS classes by using a signal
 
   Rule: An instance of `CssClasses` can be created
     Scenario: An instance of `CssClasses` is created from the runtime instance
-      Given the created runtime instance (copy of the reference to the runtime instance)
+      Given the created runtime instance, copy of the reference to the runtime instance
       When a CSS class is created from the runtime instance
       Then the CSS class instance is created
 
@@ -52,15 +52,15 @@ Feature: A struct exists as an helper for managing CSS classes by using a signal
       When the CSS class that was added is replaced with another CSS class
       Then the CSS class is replaced, the old CSS class is removed and the new CSS class is added
 
-    Scenario: A CSS class can be checked if it contains a CSS class, if the CSS class is not present, it goes false
+    Scenario: CSS classes can be checked if it contains a CSS class, if the CSS class is not present, it goes false
       Given a copy of the instance of `CssClasses`
-      When a CSS class is checked if it contains the CSS class
+      When CSS classes is checked if it contains a CSS class
       Then the instance of `CssClasses` does not contain the CSS class
 
-    Scenario: A CSS class can be checked if it contains a CSS class, if the CSS class is present, it goes true
+    Scenario: CSS classes can be checked if it contains a CSS class, if the CSS class is present, it goes true
       Given a copy of the instance of `CssClasses`
-      And a CSS class is added to the instance of `CssClasses`
-      When a CSS class is checked if it contains a CSS class
+        And a CSS class is added to the instance of `CssClasses`
+      When CSS classes is checked if it contains a CSS class
       Then the instance of `CssClasses` contains the CSS class
 
   Rule: An instance of `CssClasses` is a signal

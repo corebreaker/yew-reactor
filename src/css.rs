@@ -26,6 +26,10 @@ impl CssClasses {
         self.values.with(|values| values.iter().cloned().join(" "))
     }
 
+    pub fn sorted_values(&self) -> String {
+        self.values.with(|values| values.iter().sorted().cloned().join(" "))
+    }
+
     pub fn add(&self, class: &str) {
         self.values.update(|values| {
             values.insert(class.to_string());
@@ -50,11 +54,11 @@ impl CssClasses {
 
     pub fn replace(&self, old: &str, new: &str) {
         self.values.update(|values| {
-            if old.is_empty() {
+            if !old.is_empty() {
                 values.remove(old);
             }
 
-            if new.is_empty() {
+            if !new.is_empty() {
                 values.insert(new.to_string());
             }
         });
