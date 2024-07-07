@@ -40,12 +40,14 @@ Feature: Memo function for Yew
 
     Scenario: A keyed signal won't notify subscribers when the collection signal sets a value that is unchanged
       Given a signal is created from the runtime instance with a collection signal and a defined key
+        And a keyed signal is created from the collection signal
         And an effect created with the keyed signal
       When the same value located at the key in the collection is set through the collection signal
       Then the keyed signal does not notify its subscribers
 
     Scenario: The keyed signal will notify subscribers when the collection signal value changes for the key
       Given a signal is created from the runtime instance with a collection signal and a defined key
+        And a keyed signal is created from the collection signal
         And an effect created with the keyed signal
       When the signal value located at the key in the collection has changed
       Then the keyed signal notifies its subscribers with the new value
@@ -61,12 +63,14 @@ Feature: Memo function for Yew
 
     Scenario: A keyed signal won't notify subscribers when the collection signal sets a value that is unchanged
       Given a signal is created from the runtime instance with a collection signal and a defined key
+        And a keyed signal is created from the collection signal
         And an effect created with the keyed signal
       When the same value located at the key in the collection is set through the collection signal
       Then the keyed signal does not notify its subscribers
 
     Scenario: The keyed signal will notify subscribers when the collection signal value changes for the key
       Given a signal is created from the runtime instance with a collection signal and a defined key
+        And a keyed signal is created from the collection signal
         And an effect created with the keyed signal
       When the signal value located at the key in the collection has changed
       Then the keyed signal notifies its subscribers with the new value

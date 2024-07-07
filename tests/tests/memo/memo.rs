@@ -249,6 +249,11 @@ fn given_signal_created_from_collection_signal_with_defined_key(world: &mut Memo
     world.collection.replace(collection.clone());
 }
 
+#[given(expr = "a keyed signal is created from the collection signal")]
+fn given_keyed_signal_created_from_collection_signal(world: &mut MemoFunctions) {
+    world.keyed_signal.replace(world.rt().create_keyed_signal(world.collection(), THE_KEY));
+}
+
 #[when(expr = "the keyed signal is created")]
 fn when_keyed_signal_is_created(world: &mut MemoFunctions) {
     world.keyed_signal.replace(world.rt().create_keyed_signal(world.collection(), THE_KEY));
