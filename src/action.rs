@@ -13,8 +13,7 @@ use std::{
 pub struct Action<I, O: UnwindSafe + 'static> {
     id: Uuid,
     runtime: Arc<Runtime>,
-    pending: Signal<bool>,
-    lock: Arc<Mutex<()>>,
+    pending: Arc<Mutex<bool>>,
     value: Signal<Option<O>>,
     action_fn: Rc<dyn Fn(I) -> LocalFuture<O>>,
 }
@@ -23,16 +22,14 @@ impl<I, O: UnwindSafe + 'static> Action<I, O> {
     pub(crate) fn new<R, F>(runtime: Arc<Runtime>, action_fn: F) -> Self
         where R: Future<Output = O> + UnwindSafe + 'static, F: Fn(I) -> R + 'static {
         let id = new_id();
-        let pending = Arc::clone(&runtime).create_signal(false);
+        let pending = Arc::new(Mutex::new(false));
         let value = Arc::clone(&runtime).create_signal(None::<O>);
-        let lock = Arc::new(Mutex::new(()));
         let action_fn = Rc::new(move |input: I| LocalFuture::new(action_fn(input)));
 
         Self {
             id,
             runtime,
             pending,
-            lock,
             value,
             action_fn,
         }
@@ -51,36 +48,24 @@ impl<I, O: UnwindSafe + 'static> Action<I, O> {
     }
 
     pub fn is_pending(&self) -> bool {
-        let lock = Arc::clone(&self.lock);
-
-        self.pending.with(|p| {
-            let _lock = lock.lock().unwrap();
-
-            if *p {
-                true
-            } else {
-                false
-            }
-        })
+        *self.pending.lock().unwrap()
     }
 
     pub fn dispatch(&self, input: I) {
-        let lock = Arc::clone(&self.lock);
-
-        {
-            let _lock = lock.lock().unwrap();
-            if self.pending.peek() {
-                return;
-            }
+        let pending_lock = Arc::clone(&self.pending);
+        let pending_check = pending_lock.lock().unwrap();
+        if *pending_check {
+            return;
         }
 
         let fut = Rc::clone(&self.action_fn)(input);
         let output = self.value.clone();
-        let pending = self.pending.clone();
+        let pending = Arc::clone(&self.pending);
         let set_pending = move |val| {
-            let _lock = lock.lock().unwrap();
+            let pending_lock = Arc::clone(&pending);
+            let mut pending = pending_lock.lock().unwrap();
 
-            pending.set(val);
+            *pending = val;
         };
 
         self.runtime().spawn(async move {
@@ -89,8 +74,8 @@ impl<I, O: UnwindSafe + 'static> Action<I, O> {
 
             let res = fut.await;
 
-            set_pending(false);
             output.update(|o| { o.replace(res); });
+            set_pending(false);
         });
     }
 }

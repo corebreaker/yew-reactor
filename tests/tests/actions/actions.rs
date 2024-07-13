@@ -1,6 +1,6 @@
-use super::function::Function;
+use super::{function::Function, stall::Stall};
 use yew_reactor::{
-    spawner::generators::{TaskSpawner, FuturesSpawner},
+    spawner::generators::TaskSpawner,
     spawner::LocalFuture,
     signal::Runtime,
     action::Action,
@@ -8,7 +8,7 @@ use yew_reactor::{
 
 use cucumber_trellis::CucumberTest;
 use cucumber::{given, then, when, World};
-use std::{sync::{Arc, Condvar, Mutex}, cell::RefCell, future::Future};
+use std::{sync::{Arc, Condvar, Mutex, RwLock}, cell::RefCell, future::Future, time::Duration, thread::sleep};
 
 #[derive(World, Debug, Default)]
 pub(in super::super::super) struct Actions {
@@ -16,8 +16,8 @@ pub(in super::super::super) struct Actions {
     func: Option<Function>,
     action: Option<Action<(), &'static str>>,
     lock: Option<Arc<Mutex<()>>>,
-    condition: Option<Arc<Condvar>>,
-    value: Option<Arc<RefCell<String>>>,
+    stall: Option<Arc<Stall>>,
+    value: Option<Arc<RwLock<String>>>,
 }
 
 impl Actions {
@@ -37,11 +37,11 @@ impl Actions {
         self.lock.as_ref().cloned().expect("Lock not set")
     }
 
-    fn condition(&self) -> Arc<Condvar> {
-        self.condition.as_ref().cloned().expect("Condition not set")
+    fn stall(&self) -> Arc<Stall> {
+        self.stall.as_ref().cloned().expect("Stall not set")
     }
 
-    fn value(&self) -> Arc<RefCell<String>> {
+    fn value(&self) -> Arc<RwLock<String>> {
         self.value.as_ref().cloned().expect("Value not set")
     }
 }
@@ -52,7 +52,7 @@ impl CucumberTest for Actions {
 
 #[given(expr = "a created runtime instance")]
 fn given_context(world: &mut Actions) {
-    world.rt.replace(Runtime::new_with_spawn_generator(FuturesSpawner));
+    world.rt.replace(Runtime::new_with_spawn_generator(TaskSpawner::new()));
 }
 
 #[given(expr = "an async function")]
@@ -79,16 +79,14 @@ fn then_value_stored_in_action_is_none(world: &mut Actions) {
 
 #[given(expr = "an async function that returns a value")]
 fn given_async_func_with_return_value(world: &mut Actions) {
-    let condition = world.condition();
-    let lock = world.lock();
+    let stall = Arc::new(Stall::new());
 
-    world.rt().spawner().set_generator(TaskSpawner::default());
+    world.stall.replace(Arc::clone(&stall));
     world.func.replace(Function::new("value", move || {
-        let condition = Arc::clone(&condition);
-        let lock = Arc::clone(&lock);
+        let stall = Arc::clone(&stall);
 
         LocalFuture::new(async move {
-            let _lock = condition.wait(lock.lock().unwrap()).unwrap();
+            stall.wait().await;
 
             "value"
         })
@@ -120,7 +118,7 @@ fn then_pending_state_stay_to_true(world: &mut Actions) {
 #[then(expr = "the stored value is None")]
 fn then_stored_value_is_none(world: &mut Actions) {
     assert_eq!(world.action().get(), None, "the stored value should be `None`");
-    world.condition().notify_all();
+    world.stall().notify();
 }
 
 #[given(expr = "the action is dispatched")]
@@ -130,13 +128,13 @@ fn given_action_is_dispatched(world: &mut Actions) {
 
 #[given(expr = "an effect is created from the signal stored in the action")]
 fn given_effect_created_from_signal(world: &mut Actions) {
-    let value = Arc::new(RefCell::new(String::new()));
+    let value = Arc::new(RwLock::new(String::new()));
     let action = world.action().value();
 
     world.value.replace(Arc::clone(&value));
     world.rt().create_effect(move || {
         if let Some(result) = action.with(|val_action| val_action.map(|val| val.to_string())) {
-            let mut value = value.borrow_mut();
+            let mut value = value.write().unwrap();
 
             *value = result;
         }
@@ -145,8 +143,25 @@ fn given_effect_created_from_signal(world: &mut Actions) {
 
 #[when(expr = "the async function is executed")]
 fn when_async_func_is_executed(world: &mut Actions) {
-    world.condition().notify_all();
+    world.stall().notify();
     while world.action().is_pending() {}
+}
+
+#[then(expr = "the stored value is the return value of the async function")]
+fn then_stored_value_is_return_value(world: &mut Actions) {
+    assert_eq!(
+        world.action().get(),
+        Some("value"),
+        "the stored value should be the return value of the async function",
+    );
+}
+
+#[when(expr = "the async function has been executed")]
+fn when_async_func_has_been_executed(world: &mut Actions) {
+    world.stall().notify();
+    while world.action().is_pending() {
+        sleep(Duration::from_millis(1));
+    }
 }
 
 #[then(expr = "the return value of the async function is stored in the action")]
@@ -157,7 +172,7 @@ fn then_return_value_of_async_func_is_stored(world: &mut Actions) {
 #[then(expr = "the effect is notified with the return value of the async function")]
 fn then_effect_is_notified_with_return_value(world: &mut Actions) {
     assert_eq!(
-        world.value().borrow().to_string(),
+        world.value().read().unwrap().to_string(),
         String::from("value"),
         "the effect should be notified with the return value",
     );

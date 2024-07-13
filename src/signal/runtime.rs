@@ -150,6 +150,8 @@ impl Runtime {
                 .entry(signal_id)
                 .or_insert_with(HashSet::new)
                 .insert(effect_id);
+
+            self.dec_signal_ref(signal_id);
         }
     }
 
@@ -575,7 +577,7 @@ mod tests {
             }
 
             let value = value.unwrap();
-            let value_ref = value.lock().unwrap();
+            let value_ref = value.read().unwrap();
             let typed_value = value_ref.downcast_ref::<T>();
             if typed_value.is_none() {
                 panic!("signal value should be fetched from a downcast for {kind} signal");
@@ -844,7 +846,9 @@ mod tests {
                     count.fetch_add(signal.get(), Ordering::SeqCst);
                 });
             }
+
             assert_eq!(count.load(Ordering::SeqCst), 42, "effect should be run immediately");
+
             sig_id
         };
 
