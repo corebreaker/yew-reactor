@@ -413,44 +413,46 @@ impl Runtime {
 
 impl Debug for Runtime {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        const spc: &str = "  ";
+        const SPC: &str = "  ";
 
         let running_effect = self.running_effect.read().unwrap().map_or_else(|| String::from("-"), |id| id.id());
         let signals = self.signal_refs.read().unwrap()
             .iter()
-            .map(|(id, ref_count)| format!("\n{spc}{spc}- {} (ref count: {})", id.id(), ref_count.load(Ordering::SeqCst)))
+            .map(|(id, ref_count)| {
+                format!("\n{SPC}{SPC}- {} (ref count: {})", id.id(), ref_count.load(Ordering::SeqCst))
+            })
             .collect::<String>();
 
         let effects = self.effects.read()
             .unwrap()
             .iter()
-            .map(|(id, _)| format!("\n{spc}{spc}- {}", id.id()))
+            .map(|(id, _)| format!("\n{SPC}{SPC}- {}", id.id()))
             .collect::<String>();
 
         let links = self.signal_links.read().unwrap()
             .iter()
-            .map(|(dest, src)| format!("\n{spc}{spc}- {} -> {}", dest.id(), src.id()))
+            .map(|(dest, src)| format!("\n{SPC}{SPC}- {} -> {}", dest.id(), src.id()))
             .collect::<String>();
 
         let subscribers = self.signal_subscribers.read().unwrap()
             .iter()
             .map(|(signal_id, effect_ids)| {
                 let effect_ids = effect_ids.iter()
-                    .map(|id| format!("{spc}{spc}{spc}> {}", id.id()))
+                    .map(|id| format!("{SPC}{SPC}{SPC}> {}", id.id()))
                     .collect::<Vec<_>>();
 
-                format!("{spc}{spc}- {}:\n{}", signal_id.id(), effect_ids.join("\n"))
+                format!("{SPC}{SPC}- {}:\n{}", signal_id.id(), effect_ids.join("\n"))
             })
             .collect::<String>();
 
         write!(
             f,
             "Runtime:\n\
-                {spc}* Running effect: {running_effect}\n\
-                {spc}* Signals:{signals}\n\
-                {spc}* Effects:{effects}\n\
-                {spc}* Links:{links}\n\
-                {spc}* Subscribers:{subscribers}\n",
+                {SPC}* Running effect: {running_effect}\n\
+                {SPC}* Signals:{signals}\n\
+                {SPC}* Effects:{effects}\n\
+                {SPC}* Links:{links}\n\
+                {SPC}* Subscribers:{subscribers}\n",
         )
     }
 }

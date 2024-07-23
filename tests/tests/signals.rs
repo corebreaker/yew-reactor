@@ -1,7 +1,7 @@
 use yew_reactor::{spawner::generators::TaskSpawner, signal::{Runtime, Signal}};
 use cucumber::{given, then, when, World};
 use cucumber_trellis::CucumberTest;
-use std::{sync::{Arc, RwLock}, cell::{Cell, RefCell}};
+use std::{sync::Arc, cell::Cell};
 
 #[derive(World, Default, Debug)]
 pub(in super::super) struct Signals {

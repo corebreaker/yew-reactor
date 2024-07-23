@@ -86,10 +86,14 @@ impl MemoFunctions {
     }
 }
 
+// Background: Signals are a created from a runtime instance
+
 #[given(expr = "a created runtime instance")]
 fn given_context(world: &mut MemoFunctions) {
     world.rt.replace(Runtime::new_with_spawn_generator(TaskSpawner::new()));
 }
+
+// Rule: Creating a memo function will create a signal which will notify subscribers when the function returns changes
 
 #[given(expr = "a signal is created from the runtime instance")]
 fn given_signal(world: &mut MemoFunctions) {
@@ -213,6 +217,9 @@ fn then_signal_does_not_notify_subscribers(world: &mut MemoFunctions) {
         "signal should not notify its subscribers with the same value",
     );
 }
+
+// Rule: A keyed signal is a memo function which will notify subscribers
+//       when the collection changes its value for a key
 
 #[given(expr = "the value for the key in the collection used will not be stringified")]
 fn given_value_for_key_in_collection_not_stringified(world: &mut MemoFunctions) {

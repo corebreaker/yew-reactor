@@ -72,7 +72,7 @@ impl<T: Clone + PartialEq + Default + 'static, C: KeyedCollection<Value = T>> Co
         Component::update(self, ctx, Msg::SetValues(values))
     }
 
-    fn view(&self, ctx: &Context<Self>) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         html! {
             <>
                 {self.values.clone()}

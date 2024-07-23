@@ -25,10 +25,6 @@ impl<T: 'static> Signal<T> {
         }
     }
 
-    pub(super) fn id(&self) -> SignalId {
-        self.id
-    }
-
     pub fn runtime(&self) -> Arc<Runtime> {
         Arc::clone(&self.runtime)
     }
@@ -200,6 +196,12 @@ impl<T: 'static> Drop for Signal<T> {
 mod tests {
     use super::*;
     use crate::spawner::generators::FuturesSpawner;
+
+    impl<T: 'static> Signal<T> {
+        pub(in super::super) fn id(&self) -> SignalId {
+            self.id
+        }
+    }
 
     #[test]
     fn test_signal() {

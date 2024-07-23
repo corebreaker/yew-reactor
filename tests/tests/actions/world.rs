@@ -8,14 +8,13 @@ use yew_reactor::{
 
 use cucumber_trellis::CucumberTest;
 use cucumber::{given, then, when, World};
-use std::{sync::{Arc, Condvar, Mutex, RwLock}, cell::RefCell, future::Future, time::Duration, thread::sleep};
+use std::{sync::{Arc, RwLock}, time::Duration, thread::sleep};
 
 #[derive(World, Debug, Default)]
 pub(in super::super::super) struct Actions {
     rt: Option<Arc<Runtime>>,
     func: Option<Function>,
     action: Option<Action<(), &'static str>>,
-    lock: Option<Arc<Mutex<()>>>,
     stall: Option<Arc<Stall>>,
     value: Option<Arc<RwLock<String>>>,
 }
@@ -33,10 +32,6 @@ impl Actions {
         self.action.as_ref().expect("Action not set")
     }
 
-    fn lock(&self) -> Arc<Mutex<()>> {
-        self.lock.as_ref().cloned().expect("Lock not set")
-    }
-
     fn stall(&self) -> Arc<Stall> {
         self.stall.as_ref().cloned().expect("Stall not set")
     }
@@ -50,10 +45,14 @@ impl CucumberTest for Actions {
     const NAME: &'static str = "actions";
 }
 
+// Background: Signals are a created from a runtime instance
+
 #[given(expr = "a created runtime instance")]
 fn given_context(world: &mut Actions) {
     world.rt.replace(Runtime::new_with_spawn_generator(TaskSpawner::new()));
 }
+
+// Rule: An action must be created from an asynchronous function
 
 #[given(expr = "an async function")]
 fn given_async_func(world: &mut Actions) {
@@ -76,6 +75,8 @@ fn then_action_is_created_with_pending_state(world: &mut Actions) {
 fn then_value_stored_in_action_is_none(world: &mut Actions) {
     assert_eq!(world.action().get(), None, "the stored value should be `None`");
 }
+
+// Rule: The async function is called by dispatching its action
 
 #[given(expr = "an async function that returns a value")]
 fn given_async_func_with_return_value(world: &mut Actions) {
@@ -155,6 +156,8 @@ fn then_stored_value_is_return_value(world: &mut Actions) {
         "the stored value should be the return value of the async function",
     );
 }
+
+// Rule: Actions can be used to trigger effects with the return value of the async function
 
 #[when(expr = "the async function has been executed")]
 fn when_async_func_has_been_executed(world: &mut Actions) {

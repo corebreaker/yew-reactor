@@ -1,5 +1,5 @@
 use super::sleep::Sleep;
-use std::{sync::atomic::{AtomicBool, Ordering}, time::Duration};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 #[derive(Debug)]
 pub(super) struct Stall {

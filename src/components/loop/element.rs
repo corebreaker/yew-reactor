@@ -136,7 +136,7 @@ impl<T: Clone + Default + 'static> Component for LoopElement<T> {
         changed
     }
 
-    fn view(&self, ctx: &Context<Self>) -> Html {
+    fn view(&self, _ctx: &Context<Self>) -> Html {
         if self.condition {
             self.children.clone()
         } else {

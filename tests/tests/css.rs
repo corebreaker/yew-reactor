@@ -54,10 +54,14 @@ impl CucumberTest for CssClasses {
     const NAME: &'static str = "css";
 }
 
+// Background: Signals are a created from a runtime instance
+
 #[given(expr = "a created runtime instance")]
 fn given_context(world: &mut CssClasses) {
     world.rt.replace(Runtime::new_with_spawn_generator(TaskSpawner::new()));
 }
+
+// Rule: An instance of `CssClasses` can be created
 
 #[given(expr = "the created runtime instance, copy of the reference to the runtime instance")]
 fn given_context_copy(world: &mut CssClasses) {
@@ -66,7 +70,7 @@ fn given_context_copy(world: &mut CssClasses) {
 
 #[when(expr = "a CSS class is created from the runtime instance")]
 fn when_create_css_class(world: &mut CssClasses) {
-    world.instance.replace(world.rt().create_css_classes());
+    world.instance.replace(world.rt_copy().create_css_classes());
 }
 
 #[then(expr = "the CSS class instance is created")]
@@ -88,6 +92,8 @@ fn when_get_css_classes_value(world: &mut CssClasses) {
 fn then_value_is_empty(world: &mut CssClasses) {
     assert_eq!(world.value(), "", "the value of CSS classes should be empty");
 }
+
+// Rule: An instance of `CssClasses` can manage CSS classes
 
 #[given(expr = "a copy of the instance of `CssClasses`")]
 fn given_css_class_instance_copy(world: &mut CssClasses) {
@@ -184,6 +190,8 @@ fn then_css_class_contains(world: &mut CssClasses) {
     assert_eq!(world.value(), "contains", "the CSS class should be contained");
 }
 
+// Rule: An instance of `CssClasses` is a signal
+
 #[given(expr = "an effect created with this instance of `CssClasses` as a signal")]
 fn given_effect_created_with_signal(world: &mut CssClasses) {
     let effect_value = Arc::new(RefCell::new(String::new()));
@@ -224,6 +232,8 @@ fn when_add_css_class_to_first(world: &mut CssClasses) {
 fn then_instance_is_notified(world: &mut CssClasses) {
     assert!(world.instance_copy().contains("another-class"), "the instance should be notified");
 }
+
+// Rule: A signal can be attached to an instance of `CssClasses` is a signal to change one CSS class
 
 #[given(expr = "a signal attached to this instance of `CssClasses`")]
 fn given_signal_attached(world: &mut CssClasses) {
