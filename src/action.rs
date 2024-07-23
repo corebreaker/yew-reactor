@@ -52,30 +52,33 @@ impl<I, O: UnwindSafe + 'static> Action<I, O> {
     }
 
     pub fn dispatch(&self, input: I) {
-        let pending_lock = Arc::clone(&self.pending);
-        let pending_check = pending_lock.lock().unwrap();
-        if *pending_check {
-            return;
+        {
+            let pending_lock = Arc::clone(&self.pending);
+            let mut pending_check = pending_lock.lock().unwrap();
+            if *pending_check {
+                return;
+            }
+
+            *pending_check = true;
         }
 
         let fut = Rc::clone(&self.action_fn)(input);
         let output = self.value.clone();
         let pending = Arc::clone(&self.pending);
-        let set_pending = move |val| {
-            let pending_lock = Arc::clone(&pending);
-            let mut pending = pending_lock.lock().unwrap();
-
-            *pending = val;
-        };
 
         self.runtime().spawn(async move {
             output.untracked_update(|v| { v.take(); });
-            set_pending(true);
 
             let res = fut.await;
 
             output.update(|o| { o.replace(res); });
-            set_pending(false);
+
+            {
+                let pending_lock = Arc::clone(&pending);
+                let mut pending = pending_lock.lock().unwrap();
+
+                *pending = false;
+            }
         });
     }
 }
@@ -89,5 +92,76 @@ impl<I, O: Clone + UnwindSafe + 'static> Action<I, O> {
 impl<I, O: UnwindSafe> Debug for Action<I, O> {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "Action[{}; pending: {}]", self.id, self.is_pending())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::signal::tests::create_runtime;
+    use std::sync::RwLock;
+
+    fn create_action() -> (Action<i32, i32>, Arc<RwLock<i32>>) {
+        let action = create_runtime().create_action(|i| async move { i * 2 });
+        let value = Arc::new(RwLock::new(123));
+
+        {
+            let value = Arc::clone(&value);
+            let output = action.value().clone();
+
+            action.runtime().create_effect(move || {
+                if let Some(v) = output.with(|v: &Option<i32>| -> Option<i32> { v.as_ref().map(|v| *v + 2) }) {
+                    let mut value = value.write().unwrap();
+
+                    *value = v;
+                }
+            });
+        }
+
+        (action, value)
+    }
+
+    #[test]
+    fn test_create_action() {
+        let (action, _) = create_action();
+
+        assert_eq!(action.is_pending(), false, "action should not be pending");
+        assert_eq!(action.get(), None, "action value should be None");
+
+        assert_eq!(
+            format!("{:?}", action),
+            format!("Action[{}; pending: false]", action.id),
+            "action should be formatted correctly",
+        );
+    }
+
+    #[test]
+    fn test_changes_on_value() {
+        let (action, value) = create_action();
+
+        action.value().set(Some(40));
+        assert_eq!(*value.read().unwrap(), 42, "action value should be set");
+    }
+
+    #[test]
+    fn test_dispatch_action() {
+        let (action, value) = create_action();
+
+        action.dispatch(20);
+        assert_eq!(*value.read().unwrap(), 42, "action value should be set");
+    }
+
+    #[test]
+    fn test_dispatch_while_pending_previews_dispatch() {
+        let (action, value) = create_action();
+
+        {
+            let mut pending = action.pending.lock().unwrap();
+
+            *pending = true;
+        }
+
+        action.dispatch(20);
+        assert_eq!(*value.read().unwrap(), 123, "action value should be set");
     }
 }

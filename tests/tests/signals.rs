@@ -1,3 +1,4 @@
+use super::runner::RunnerForTests;
 use yew_reactor::{spawner::generators::TaskSpawner, signal::{Runtime, Signal}};
 use cucumber::{given, then, when, World};
 use cucumber_trellis::CucumberTest;
@@ -62,7 +63,7 @@ impl CucumberTest for Signals {
 
 #[given(expr = "a created runtime instance")]
 fn given_context(world: &mut Signals) {
-    world.rt.replace(Runtime::new_with_spawn_generator(TaskSpawner::new()));
+    world.rt.replace(Runtime::new().with_spawn_generator(TaskSpawner::new()).with_defer_runner(RunnerForTests));
 }
 
 // Rule: A signal can be accessed from a copy, this is the right way to access the signal

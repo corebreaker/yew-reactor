@@ -1,5 +1,5 @@
 use super::{id::{SignalId, EffectId}, KeyedCollection, Signal};
-use crate::{spawner::{Spawner, SpawnGenerator}, action::Action, css::CssClasses};
+use crate::{spawner::{Spawner, SpawnGenerator}, defer::{DeferManager, DeferRunner}, action::Action, css::CssClasses};
 use std::{
     sync::atomic::{AtomicUsize, Ordering},
     collections::{HashMap, HashSet},
@@ -16,6 +16,7 @@ type EffectFn = Arc<dyn Fn()>;
 #[derive(Default)]
 pub struct Runtime {
     spawner: Spawner,
+    defer_manager: DeferManager,
     signal_values: RwLock<HashMap<SignalId, SignalValue>>,
     signal_refs: RwLock<HashMap<SignalId, AtomicUsize>>,
     running_effect: RwLock<Option<EffectId>>,
@@ -31,19 +32,26 @@ impl Runtime {
         Arc::new(Self::default())
     }
 
-    pub fn new_with_spawn_generator(generator: impl SpawnGenerator + 'static) -> Arc<Self> {
-        let res = Self::default();
+    pub fn with_spawn_generator(self: Arc<Runtime>, generator: impl SpawnGenerator + 'static) -> Arc<Self> {
+        self.spawner.set_generator(generator);
+        self
+    }
 
-        res.spawner.set_generator(generator);
-        Arc::new(res)
+    pub fn with_defer_runner(self: Arc<Runtime>, defer_runner: impl DeferRunner + 'static) -> Arc<Self> {
+        self.defer_manager.set_runner(defer_runner);
+        self
     }
 
     pub fn spawner(&self) -> &Spawner {
         &self.spawner
     }
 
-    pub(crate) fn spawn<F: Future<Output = ()> + UnwindSafe + 'static>(&self, f: F) {
+    pub(crate) fn spawn<F: Future<Output = ()> + Send + UnwindSafe + 'static>(&self, f: F) {
         self.spawner.spawn(f)
+    }
+
+    pub(super) fn defer<F: Fn() + UnwindSafe + 'static>(&self, f: F) {
+        self.defer_manager.run(f)
     }
 
     pub(super) fn get_value(&self, id: &SignalId) -> SignalValue {
@@ -460,12 +468,12 @@ impl Debug for Runtime {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::spawner::generators::FuturesSpawner;
+    use crate::signal::tests::create_runtime;
     use std::fmt::{Debug, Display};
 
     #[test]
     fn test_runtime_new() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
 
         assert_eq!(rt.signal_values.read().unwrap().len(), 0, "signal values should be empty");
         assert_eq!(rt.signal_refs.read().unwrap().len(), 0, "signal refs should be empty");
@@ -478,7 +486,7 @@ mod tests {
 
     #[test]
     fn test_inc_signal_ref() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let id = SignalId::new();
 
         assert_eq!(rt.signal_refs.read().unwrap().len(), 0, "signal refs should be empty");
@@ -495,7 +503,7 @@ mod tests {
 
     #[test]
     fn test_dec_signal_ref() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let id = SignalId::new();
 
         assert_eq!(rt.signal_refs.read().unwrap().len(), 0, "signal refs should be empty");
@@ -512,7 +520,7 @@ mod tests {
 
     #[test]
     fn test_clean_signal() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let id = SignalId::new();
 
         rt.signal_refs.write().unwrap().insert(id, AtomicUsize::new(2));
@@ -547,7 +555,7 @@ mod tests {
 
     #[test]
     fn test_make_signal() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let id = SignalId::new();
         let signal = Arc::clone(&rt).make_signal::<i32>(id);
 
@@ -564,7 +572,7 @@ mod tests {
     }
 
     fn _test_create_signal<T: Any + Clone + Display + Debug + PartialEq>(kind: &str, v: T) {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let signal = Arc::clone(&rt).create_signal(v.clone());
         let id = signal.id();
 
@@ -609,7 +617,7 @@ mod tests {
 
     #[test]
     fn test_create_link() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let signal = Arc::clone(&rt).create_signal(42);
         let link = signal.create_link();
 
@@ -629,7 +637,7 @@ mod tests {
 
     #[test]
     fn test_fetch_linked_signal_id() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let signal = Arc::clone(&rt).create_signal(42);
         let link = signal.create_link();
         let id = rt.get_source_id(link.id());
@@ -639,7 +647,7 @@ mod tests {
 
     #[test]
     fn test_make_signal_link_on_itself() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let signal = Arc::clone(&rt).create_signal(42);
         let himself = signal.clone();
 
@@ -651,7 +659,7 @@ mod tests {
 
     #[test]
     fn test_make_normal_signal_link() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let dest_signal = Arc::clone(&rt).create_signal(42);
         let src_signal = Arc::clone(&rt).create_signal(43);
         let id = src_signal.id();
@@ -684,7 +692,7 @@ mod tests {
 
     #[test]
     fn test_make_signal_link_on_linked_signal() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let dest_signal = Arc::clone(&rt).create_signal(50);
         let src_signal = Arc::clone(&rt).create_signal(42);
         let link_signal = src_signal.create_link();
@@ -748,7 +756,7 @@ mod tests {
 
     #[test]
     fn test_create_effect() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let signal = Arc::clone(&rt).create_signal(42);
         let sig_id = signal.id();
         let count = Arc::new(AtomicUsize::new(0));
@@ -806,7 +814,7 @@ mod tests {
 
     #[test]
     fn test_create_oneshot_effect() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let count = Arc::new(AtomicUsize::new(0));
 
         assert_eq!(count.load(Ordering::SeqCst), 0, "effect should not be run immediately");
@@ -824,7 +832,7 @@ mod tests {
 
     #[test]
     fn test_create_autodestructing_effect() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let sig_id = {
             let signal = Arc::clone(&rt).create_signal(42);
             let sig_id = signal.id();
@@ -868,7 +876,7 @@ mod tests {
 
     #[test]
     fn test_add_subscriber() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let sig_id = SignalId::new();
         let eff_id = EffectId::new();
 
@@ -907,7 +915,7 @@ mod tests {
 
     #[test]
     fn test_notify_subscribers() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let sig_id = SignalId::new();
         let eff_id = EffectId::new();
         let count = Arc::new(AtomicUsize::new(32));
@@ -937,7 +945,7 @@ mod tests {
 
     #[test]
     fn test_run_effect() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let sig_id = SignalId::new();
         let eff_id = EffectId::new();
         let count = Arc::new(AtomicUsize::new(32));
@@ -973,7 +981,7 @@ mod tests {
 
     #[test]
     fn test_remove_value_links() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let sig_id = SignalId::new();
         let other_id = SignalId::new();
         let link_id = SignalId::new();
@@ -1004,7 +1012,7 @@ mod tests {
 
     #[test]
     fn test_remove_reverse_links() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let sig_id = SignalId::new();
         let link_id = SignalId::new();
 
@@ -1019,7 +1027,7 @@ mod tests {
 
     #[test]
     fn test_remove_signal() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let sig_id = SignalId::new();
         let link_id = SignalId::new();
         let reverse_id = SignalId::new();
@@ -1050,7 +1058,7 @@ mod tests {
 
     #[test]
     fn test_remove_effect() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let sig_id = SignalId::new();
         let effect_id = EffectId::new();
 

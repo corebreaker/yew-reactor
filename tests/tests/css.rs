@@ -1,3 +1,4 @@
+use super::runner::RunnerForTests;
 use yew_reactor::{signal::{Signal, Runtime}, spawner::generators::TaskSpawner, css::CssClasses as YrCssClasses};
 use cucumber_trellis::CucumberTest;
 use cucumber::{given, then, when, World};
@@ -58,7 +59,7 @@ impl CucumberTest for CssClasses {
 
 #[given(expr = "a created runtime instance")]
 fn given_context(world: &mut CssClasses) {
-    world.rt.replace(Runtime::new_with_spawn_generator(TaskSpawner::new()));
+    world.rt.replace(Runtime::new().with_spawn_generator(TaskSpawner::new()).with_defer_runner(RunnerForTests));
 }
 
 // Rule: An instance of `CssClasses` can be created

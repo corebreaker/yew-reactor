@@ -1,4 +1,11 @@
-use super::{keyed_signal_kind::KeyedSignalKind, collection::Collection, value::Value, function::Function};
+use super::{
+    super::runner::RunnerForTests,
+    keyed_signal_kind::KeyedSignalKind,
+    collection::Collection,
+    function::Function,
+    value::Value,
+};
+
 use yew_reactor::{signal::{Signal, Runtime}, spawner::generators::TaskSpawner};
 use cucumber_trellis::CucumberTest;
 use cucumber::{given, then, when, World};
@@ -90,7 +97,7 @@ impl MemoFunctions {
 
 #[given(expr = "a created runtime instance")]
 fn given_context(world: &mut MemoFunctions) {
-    world.rt.replace(Runtime::new_with_spawn_generator(TaskSpawner::new()));
+    world.rt.replace(Runtime::new().with_spawn_generator(TaskSpawner::new()).with_defer_runner(RunnerForTests));
 }
 
 // Rule: Creating a memo function will create a signal which will notify subscribers when the function returns changes

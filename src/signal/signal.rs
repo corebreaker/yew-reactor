@@ -66,8 +66,8 @@ impl<T: 'static> Signal<T> {
     }
 
     pub fn update(&self, f: impl FnOnce(&mut T)) {
-        let runtime = self.runtime();
         let id = self.id;
+        let runtime = self.runtime();
 
         // set value
         {
@@ -84,7 +84,7 @@ impl<T: 'static> Signal<T> {
         }
 
         // notify subscribers
-        self.runtime().spawn(async move {
+        self.runtime().defer(move || {
             runtime.notify_subscribers(id);
         });
     }
@@ -123,7 +123,7 @@ impl<T: 'static> Signal<T> {
 
         // notify subscribers
         if should_notify {
-            self.runtime().spawn(async move {
+            self.runtime().defer(move || {
                 runtime.notify_subscribers(id);
             });
         }
@@ -192,10 +192,12 @@ impl<T: 'static> Drop for Signal<T> {
     }
 }
 
+unsafe impl<T: 'static> Send for Signal<T> {}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::spawner::generators::FuturesSpawner;
+    use crate::signal::tests::create_runtime;
 
     impl<T: 'static> Signal<T> {
         pub(in super::super) fn id(&self) -> SignalId {
@@ -205,7 +207,7 @@ mod tests {
 
     #[test]
     fn test_signal() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let signal = Arc::clone(&rt).create_signal(0);
 
         assert_eq!(signal.get(), 0, "signal value should be equal to the initial value");
@@ -255,7 +257,7 @@ mod tests {
 
     #[test]
     fn test_combine_signal() {
-        let rt = Runtime::new_with_spawn_generator(FuturesSpawner);
+        let rt = create_runtime();
         let signal1 = Arc::clone(&rt).create_signal(1);
         let signal2 = Arc::clone(&rt).create_signal(2);
         let result = signal1.with_another(signal2, |v1, v2| v1 + v2);

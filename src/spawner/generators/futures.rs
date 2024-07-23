@@ -2,11 +2,11 @@ use crate::spawner::{SpawnGenerator, FutureVoid};
 use futures::executor::block_on;
 
 #[derive(Clone, Debug, Default)]
-pub struct FuturesSpawner;
+pub struct FuturesSpawner {}
 
 impl FuturesSpawner {
     pub fn new() -> Self {
-        FuturesSpawner
+        FuturesSpawner{}
     }
 }
 

@@ -1,11 +1,5 @@
-use super::{function::Function, stall::Stall};
-use yew_reactor::{
-    spawner::generators::TaskSpawner,
-    spawner::LocalFuture,
-    signal::Runtime,
-    action::Action,
-};
-
+use super::{super::runner::RunnerForTests, function::Function, stall::Stall};
+use yew_reactor::{spawner::{generators::TaskSpawner, LocalFuture}, signal::Runtime, action::Action};
 use cucumber_trellis::CucumberTest;
 use cucumber::{given, then, when, World};
 use std::{sync::{Arc, RwLock}, time::Duration, thread::sleep};
@@ -49,7 +43,7 @@ impl CucumberTest for Actions {
 
 #[given(expr = "a created runtime instance")]
 fn given_context(world: &mut Actions) {
-    world.rt.replace(Runtime::new_with_spawn_generator(TaskSpawner::new()));
+    world.rt.replace(Runtime::new().with_spawn_generator(TaskSpawner::new()).with_defer_runner(RunnerForTests));
 }
 
 // Rule: An action must be created from an asynchronous function

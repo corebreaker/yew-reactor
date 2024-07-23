@@ -14,14 +14,14 @@ impl Spawner {
     }
 
     pub fn spawn<F: Future<Output = ()> + UnwindSafe + 'static>(&self, f: F) {
-        self.init();
+        self.init_spawner();
 
         if let Some(generator) = self.0.read().unwrap().as_ref() {
             generator.spawn(FutureVoid::new(f));
         }
     }
 
-    fn init(&self) {
+    fn init_spawner(&self) {
         let mut this = self.0.write().unwrap();
 
         if let None = this.as_ref() {
