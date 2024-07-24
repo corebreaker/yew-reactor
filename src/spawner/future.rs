@@ -45,3 +45,24 @@ unsafe impl<O> Send for LocalFuture<O> {}
 unsafe impl<O> Sync for LocalFuture<O> {}
 
 impl<O> UnwindSafe for LocalFuture<O> {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{atomic::{AtomicUsize, Ordering}, Arc};
+
+    #[tokio::test]
+    async fn test_local_future() {
+        let value = Arc::new(AtomicUsize::new(0));
+
+        {
+            let value = Arc::clone(&value);
+
+            LocalFuture::new(async move {
+                value.fetch_add(1, Ordering::Relaxed);
+            }).await;
+        }
+
+        assert_eq!(value.load(Ordering::Relaxed), 1, "local future should be executed");
+    }
+}

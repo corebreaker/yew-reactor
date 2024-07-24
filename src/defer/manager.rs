@@ -30,3 +30,57 @@ impl DeferManager {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use super::super::runners::RunnerForTests;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+
+    #[test]
+    fn test_init_manager() {
+        let manager = DeferManager::default();
+
+        assert!(manager.0.read().unwrap().is_none(), "the manager should be None before init");
+        manager.init_manager();
+        assert!(manager.0.read().unwrap().is_some(), "the manager should be Some after init");
+    }
+
+    #[test]
+    fn test_reset_runner() {
+        let manager = DeferManager::default();
+        manager.init_manager();
+
+        assert!(manager.0.read().unwrap().is_some(), "the manager should be Some before reset");
+        manager.reset_runner();
+        assert!(manager.0.read().unwrap().is_none(), "the manager should be None after reset");
+    }
+
+    #[test]
+    fn test_set_runner() {
+        let manager = DeferManager::default();
+        manager.init_manager();
+
+        assert!(manager.0.read().unwrap().is_some(), "the manager should be Some before set");
+        manager.set_runner(DefaultRunner::new());
+        assert!(manager.0.read().unwrap().is_some(), "the manager should be Some after set");
+    }
+
+    #[test]
+    fn test_run() {
+        let manager = DeferManager::default();
+        manager.set_runner(RunnerForTests::new());
+
+        let counter = Arc::new(AtomicUsize::new(0));
+
+        {
+            let counter = Arc::clone(&counter);
+
+            manager.run(move || {
+                counter.fetch_add(1, Ordering::SeqCst);
+            });
+        }
+
+        assert_eq!(counter.load(Ordering::SeqCst), 1, "the counter should be 1 after run");
+    }
+}
