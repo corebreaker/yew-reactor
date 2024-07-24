@@ -1068,4 +1068,85 @@ mod tests {
         assert!(!rt.signal_refs.read().unwrap().contains_key(&sig_id), "signal ref should be removed");
         assert!(!rt.signal_subscribers.read().unwrap().contains_key(&sig_id), "signal subscriber should be removed");
     }
+
+    #[test]
+    fn test_create_keyed_signal() {
+        let key = String::from("foo");
+        let rt = create_runtime();
+        let collection = Arc::clone(&rt).create_signal(HashMap::new());
+        let signal = Arc::clone(&rt).create_keyed_signal(collection.clone(), &key);
+
+        assert_eq!(signal.get(), None, "signal value should be None");
+
+        collection.update(|c| {
+            c.insert(key, 42);
+        });
+
+        assert_eq!(signal.get(), Some(42), "signal value should be updated");
+    }
+
+    #[test]
+    fn test_create_keyed_str_signal() {
+        let key = String::from("foo");
+        let rt = create_runtime();
+        let collection = Arc::clone(&rt).create_signal(HashMap::new());
+        let signal = Arc::clone(&rt).create_keyed_str_signal(collection.clone(), &key);
+
+        assert_eq!(signal.get(), None, "signal value should be None");
+
+        collection.update(|c| {
+            c.insert(key, 42);
+        });
+
+        assert_eq!(signal.get(), Some(String::from("42")), "signal value should be updated");
+    }
+
+    #[test]
+    fn test_create_memo() {
+        let rt = create_runtime();
+        let signal = Arc::clone(&rt).create_signal(42);
+        let memo = {
+            let signal = signal.clone();
+
+            Arc::clone(&rt).create_memo(move |_| signal.get())
+        };
+
+        let call_count = Arc::new(AtomicUsize::new(0));
+        {
+            let call_count = Arc::clone(&call_count);
+            let signal = signal.clone();
+
+            rt.create_effect(move || {
+                call_count.fetch_add(1, Ordering::SeqCst);
+                signal.get();
+            });
+        }
+
+        let update_count = Arc::new(AtomicUsize::new(0));
+        {
+            let update_count = Arc::clone(&update_count);
+            let memo = memo.clone();
+
+            rt.create_effect(move || {
+                update_count.fetch_add(1, Ordering::SeqCst);
+                memo.get();
+            });
+        }
+
+        assert_eq!(memo.get(), 42, "memo value should be equal to the initial value");
+        assert_eq!(call_count.load(Ordering::SeqCst), 1, "memo should be called once after creating");
+        assert_eq!(update_count.load(Ordering::SeqCst), 1, "memo should be called once after creating");
+
+        signal.set(42);
+        assert_eq!(call_count.load(Ordering::SeqCst), 2, "memo should be called once after updating the signal");
+        assert_eq!(
+            update_count.load(Ordering::SeqCst),
+            1,
+            "memo should not be called once when the value is not changed",
+        );
+
+        signal.set(123);
+        assert_eq!(call_count.load(Ordering::SeqCst), 3, "memo should be called once after updating the signal");
+        assert_eq!(update_count.load(Ordering::SeqCst), 2, "memo should be called hen the value is changed");
+    }
 }
