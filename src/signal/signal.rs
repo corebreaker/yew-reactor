@@ -41,8 +41,10 @@ impl<T: 'static> Signal<T> {
         let runtime = self.runtime();
 
         // add subscribers
-        if !self.registered.fetch_or(true, Ordering::SeqCst) {
-            runtime.add_subscriber(self.id);
+        if runtime.add_subscriber(self.id) {
+            if !self.registered.fetch_or(true, Ordering::SeqCst) {
+                runtime.dec_signal_ref(self.id);
+            }
         }
 
         // get value

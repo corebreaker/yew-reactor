@@ -151,15 +151,15 @@ impl Runtime {
         self.run_effect(id);
     }
 
-    pub(super) fn add_subscriber(&self, signal_id: SignalId) {
+    pub(super) fn add_subscriber(&self, signal_id: SignalId) -> bool {
         if let Some(effect_id) = self.running_effect.read().unwrap().clone() {
             self.signal_subscribers.write()
                 .unwrap()
                 .entry(signal_id)
                 .or_insert_with(HashSet::new)
-                .insert(effect_id);
-
-            self.dec_signal_ref(signal_id);
+                .insert(effect_id)
+        } else {
+            false
         }
     }
 
@@ -896,21 +896,17 @@ mod tests {
         );
 
         rt.running_effect.write().unwrap().replace(eff_id);
-        rt.add_subscriber(sig_id);
 
+        let added = rt.add_subscriber(sig_id);
         let effects = vec![eff_id].into_iter().collect::<HashSet<_>>();
 
+        assert!(added, "subscriber should be added to the signal");
         assert_eq!(
             rt.signal_subscribers.read().unwrap().get(&sig_id),
             Some(&effects),
             "effect should be added to the subscribers after registration",
         );
 
-        assert_eq!(
-            rt.signal_refs.read().unwrap().get(&sig_id).unwrap().load(Ordering::SeqCst),
-            1,
-            "signal ref count should be decremented after registration",
-        );
     }
 
     #[test]

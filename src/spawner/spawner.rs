@@ -1,8 +1,8 @@
 use super::{generators::default::DefaultSpawner, SpawnGenerator, FutureVoid};
-use std::{future::Future, sync::RwLock, panic::UnwindSafe};
+use std::{future::Future, sync::RwLock, panic::UnwindSafe, sync::Arc};
 
 #[derive(Default)]
-pub struct Spawner(RwLock<Option<Box<dyn SpawnGenerator>>>);
+pub struct Spawner(RwLock<Option<Arc<dyn SpawnGenerator>>>);
 
 impl Spawner {
     pub fn reset_generator(&self) {
@@ -10,13 +10,14 @@ impl Spawner {
     }
 
     pub fn set_generator(&self, generator: impl SpawnGenerator + 'static) {
-        self.0.write().unwrap().replace(Box::new(generator));
+        self.0.write().unwrap().replace(Arc::new(generator));
     }
 
     pub fn spawn<F: Future<Output = ()> + UnwindSafe + 'static>(&self, f: F) {
         self.init_spawner();
 
-        if let Some(generator) = self.0.read().unwrap().as_ref() {
+        let generator = self.0.read().unwrap().as_ref().map(|r| Arc::clone(r));
+        if let Some(generator) = generator {
             generator.spawn(FutureVoid::new(f));
         }
     }
@@ -25,7 +26,7 @@ impl Spawner {
         let mut this = self.0.write().unwrap();
 
         if let None = this.as_ref() {
-            this.replace(Box::new(DefaultSpawner));
+            this.replace(Arc::new(DefaultSpawner));
         }
     }
 }
