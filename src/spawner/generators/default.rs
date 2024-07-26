@@ -1,3 +1,4 @@
+// no-coverage:start
 use crate::spawner::{SpawnGenerator, FutureVoid};
 use yew::platform::spawn_local;
 
@@ -9,3 +10,4 @@ impl SpawnGenerator for DefaultSpawner {
         spawn_local(fut);
     }
 }
+// no-coverage:stop

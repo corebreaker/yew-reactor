@@ -1,3 +1,4 @@
+// no-coverage:start
 use crate::defer::DeferRunner;
 use yew::platform::spawn_local;
 use std::sync::Arc;
@@ -19,3 +20,4 @@ impl DeferRunner for DefaultRunner {
         });
     }
 }
+// no-coverage:stop

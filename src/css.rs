@@ -103,6 +103,7 @@ impl Debug for CssClasses {
     }
 }
 
+// no-coverage:start
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -259,3 +260,4 @@ mod tests {
         assert_eq!(dest.sorted_values(), "class1 class3 class4", "the removal should be reflected in the destination");
     }
 }
+// no-coverage:stop

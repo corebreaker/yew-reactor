@@ -465,6 +465,7 @@ impl Debug for Runtime {
     }
 }
 
+// no-coverage:start
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1150,3 +1151,4 @@ mod tests {
         assert_eq!(update_count.load(Ordering::SeqCst), 2, "memo should be called hen the value is changed");
     }
 }
+// no-coverage:stop

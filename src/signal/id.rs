@@ -40,6 +40,7 @@ impl Display for EffectId {
     }
 }
 
+// no-coverage:start
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -58,3 +59,5 @@ mod tests {
         assert_eq!(format!("{id}"), format!("effect:id:{}", id.0));
     }
 }
+// no-coverage:stop
+

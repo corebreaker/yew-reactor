@@ -31,6 +31,7 @@ impl DeferManager {
     }
 }
 
+// no-coverage:start
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -84,3 +85,4 @@ mod tests {
         assert_eq!(counter.load(Ordering::SeqCst), 1, "the counter should be 1 after run");
     }
 }
+// no-coverage:stop

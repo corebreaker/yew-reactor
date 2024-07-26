@@ -196,6 +196,7 @@ impl<T: 'static> Drop for Signal<T> {
 
 unsafe impl<T: 'static> Send for Signal<T> {}
 
+// no-coverage:start
 #[cfg(test)]
 mod tests {
     use std::sync::atomic::AtomicUsize;
@@ -344,3 +345,4 @@ mod tests {
         assert_eq!(value.load(Ordering::SeqCst), 321, "the stored value should be changed");
     }
 }
+// no-coverage:stop

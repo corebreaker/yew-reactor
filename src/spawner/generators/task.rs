@@ -16,6 +16,7 @@ impl SpawnGenerator for TaskSpawner {
     }
 }
 
+// no-coverage:start
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -44,3 +45,4 @@ mod tests {
         assert_eq!(value.load(Ordering::Relaxed), 1, "spawned task should be executed");
     }
 }
+// no-coverage:stop

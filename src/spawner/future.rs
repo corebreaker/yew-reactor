@@ -46,6 +46,7 @@ unsafe impl<O> Sync for LocalFuture<O> {}
 
 impl<O> UnwindSafe for LocalFuture<O> {}
 
+// no-coverage:start
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -66,3 +67,4 @@ mod tests {
         assert_eq!(value.load(Ordering::Relaxed), 1, "local future should be executed");
     }
 }
+// no-coverage:stop

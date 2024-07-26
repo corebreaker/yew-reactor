@@ -46,6 +46,7 @@ impl<V: 'static> KeyedCollection for Vec<V> {
     }
 }
 
+// no-coverage:start
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -91,3 +92,4 @@ mod tests {
         assert_eq!(vec.iter_keys().collect::<HashSet<_>>(), keys);
     }
 }
+// no-coverage:stop

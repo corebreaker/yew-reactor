@@ -95,6 +95,7 @@ impl<I, O: UnwindSafe> Debug for Action<I, O> {
     }
 }
 
+// no-coverage:start
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -165,3 +166,4 @@ mod tests {
         assert_eq!(*value.read().unwrap(), 123, "action value should be set");
     }
 }
+// no-coverage:stop

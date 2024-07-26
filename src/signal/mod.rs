@@ -9,6 +9,7 @@ pub use self::{
     keyed_collection::KeyedCollection,
 };
 
+// no-coverage:start
 #[cfg(test)]
 pub(crate) mod tests {
     use super::*;
@@ -21,3 +22,4 @@ pub(crate) mod tests {
             .with_defer_runner(RunnerForTests::new())
     }
 }
+// no-coverage:stop

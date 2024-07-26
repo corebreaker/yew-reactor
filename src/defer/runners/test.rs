@@ -1,3 +1,4 @@
+// no-coverage:start
 use crate::defer::DeferRunner;
 use std::sync::Arc;
 
@@ -14,3 +15,4 @@ impl DeferRunner for RunnerForTests {
         f();
     }
 }
+// no-coverage:stop
