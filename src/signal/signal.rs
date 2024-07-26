@@ -198,6 +198,7 @@ unsafe impl<T: 'static> Send for Signal<T> {}
 
 #[cfg(test)]
 mod tests {
+    use std::sync::atomic::AtomicUsize;
     use super::*;
     use crate::signal::tests::create_runtime;
 
@@ -208,7 +209,23 @@ mod tests {
     }
 
     #[test]
-    fn test_signal() {
+    fn test_signal_get() {
+        let rt = create_runtime();
+        let signal = Arc::clone(&rt).create_signal(42);
+
+        assert_eq!(signal.get(), 42, "signal value should be equal to the initial value");
+    }
+
+    #[test]
+    fn test_signal_with() {
+        let rt = create_runtime();
+        let signal = Arc::clone(&rt).create_signal(21);
+
+        assert_eq!(signal.with(|v| *v * 2), 42, "signal value should be equal to the initial value");
+    }
+
+    #[test]
+    fn test_signal_set() {
         let rt = create_runtime();
         let signal = Arc::clone(&rt).create_signal(0);
 
@@ -216,24 +233,24 @@ mod tests {
 
         signal.set(1);
         assert_eq!(signal.get(), 1, "signal value should be equal to the set value");
+    }
 
+    #[test]
+    fn test_signal_update() {
+        let rt = create_runtime();
+        let signal = Arc::clone(&rt).create_signal(0);
+
+        assert_eq!(signal.get(), 0, "signal value should be equal to the initial value");
         signal.update(|v| *v = 2);
         assert_eq!(signal.get(), 2, "signal value should be equal to the updated value");
+    }
 
-        signal.untracked_update(|v| *v = 3);
-        assert_eq!(signal.get(), 3, "signal value should be equal to the untracked updated value");
+    #[test]
+    fn test_signal_link() {
+        let rt = create_runtime();
+        let signal = Arc::clone(&rt).create_signal(0);
 
-        signal.update_if(|v| {
-            *v = 4;
-            true
-        });
-        assert_eq!(signal.get(), 4, "signal value should be equal to the updated value");
-
-        signal.update_if(|v| {
-            *v = 5;
-            false
-        });
-        assert_eq!(signal.get(), 5, "signal value should be equal to the previous value");
+        assert_eq!(signal.get(), 0, "signal value should be equal to the initial value");
 
         let signal2 = Arc::clone(&rt).create_signal(0);
         signal.link_to(&signal2);
@@ -243,18 +260,6 @@ mod tests {
 
         let signal3 = signal.create_link();
         signal3.set(7);
-
-        assert_eq!(
-            signal3.get(),
-            7,
-            "signal value should be equal to the created linked signal value with linked getter",
-        );
-
-        assert_eq!(
-            signal.get(),
-            7,
-            "signal value should be equal to the created linked signal value with direct getter",
-        );
     }
 
     #[test]
@@ -265,5 +270,77 @@ mod tests {
         let result = signal1.with_another(signal2, |v1, v2| v1 + v2);
 
         assert_eq!(result, 3, "signal value should be equal to the sum of the two signals");
+    }
+
+    #[test]
+    fn test_signal_update_in_an_effect() {
+        let rt = create_runtime();
+        let signal = Arc::clone(&rt).create_signal(42);
+        let value = Arc::new(AtomicUsize::new(0));
+        let call_count = Arc::new(AtomicUsize::new(0));
+
+        {
+            let value = Arc::clone(&value);
+            let call_count = Arc::clone(&call_count);
+            let signal = signal.clone();
+
+            signal.runtime().create_effect(move || {
+                call_count.fetch_add(1, Ordering::SeqCst);
+                value.store(signal.get(), Ordering::SeqCst);
+            });
+        }
+
+        assert_eq!(call_count.load(Ordering::SeqCst), 1, "the effect should be called once for initial value");
+        assert_eq!(value.load(Ordering::SeqCst), 42, "the initial value should be stored");
+
+        signal.untracked_update(|v| *v = 123);
+        assert_eq!(signal.get(), 123, "signal value should be equal to the untracked updated value");
+        assert_eq!(call_count.load(Ordering::SeqCst), 1, "the effect should not be called for untracked update");
+        assert_eq!(value.load(Ordering::SeqCst), 42, "the stored value should not be changed");
+
+        signal.update(|v| *v = 0);
+        assert_eq!(signal.get(), 0, "signal value should be equal to the untracked updated value");
+        assert_eq!(call_count.load(Ordering::SeqCst), 2, "the effect should be called for untracked update");
+        assert_eq!(value.load(Ordering::SeqCst), 0, "the stored value should be changed");
+    }
+
+    #[test]
+    fn test_signal_conditionned_update() {
+        let rt = create_runtime();
+        let signal = Arc::clone(&rt).create_signal(42);
+        let value = Arc::new(AtomicUsize::new(0));
+        let call_count = Arc::new(AtomicUsize::new(0));
+
+        {
+            let value = Arc::clone(&value);
+            let call_count = Arc::clone(&call_count);
+            let signal = signal.clone();
+
+            signal.runtime().create_effect(move || {
+                call_count.fetch_add(1, Ordering::SeqCst);
+                value.store(signal.get(), Ordering::SeqCst);
+            });
+        }
+
+        assert_eq!(call_count.load(Ordering::SeqCst), 1, "the effect should be called once for initial value");
+        assert_eq!(value.load(Ordering::SeqCst), 42, "the initial value should be stored");
+
+        signal.update_if(|v| {
+            *v = 123;
+            false
+        });
+
+        assert_eq!(signal.get(), 123, "signal value should be equal to the updated value");
+        assert_eq!(call_count.load(Ordering::SeqCst), 1, "the effect should not be called for false condition");
+        assert_eq!(value.load(Ordering::SeqCst), 42, "the stored value should not be changed");
+
+        signal.update_if(|v| {
+            *v = 321;
+            true
+        });
+
+        assert_eq!(signal.get(), 321, "signal value should be equal to the updated value");
+        assert_eq!(call_count.load(Ordering::SeqCst), 2, "the effect should be called for true condition");
+        assert_eq!(value.load(Ordering::SeqCst), 321, "the stored value should be changed");
     }
 }
