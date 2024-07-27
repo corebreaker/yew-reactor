@@ -4,7 +4,7 @@ use std::collections::HashMap;
 
 #[derive(Default, Debug)]
 pub(super) struct Collection {
-    map: HashMap<String, Value>
+    map: HashMap<String, Value>,
 }
 
 impl Collection {
@@ -20,7 +20,7 @@ impl KeyedCollection for Collection {
         self.map.get(key)
     }
 
-    fn iter_keys(&self) -> impl Iterator<Item=String> {
+    fn iter_keys(&self) -> impl Iterator<Item = String> {
         self.map.keys().map(|s| s.clone())
     }
 }

@@ -1,5 +1,8 @@
 use super::{runner::DeferRunner, runners::DefaultRunner};
-use std::{sync::{Arc, RwLock}, panic::UnwindSafe};
+use std::{
+    sync::{Arc, RwLock},
+    panic::UnwindSafe,
+};
 
 #[derive(Default)]
 pub struct DeferManager(RwLock<Option<Arc<dyn DeferRunner>>>);
@@ -42,9 +45,16 @@ mod tests {
     fn test_init_manager() {
         let manager = DeferManager::default();
 
-        assert!(manager.0.read().unwrap().is_none(), "the manager should be None before init");
+        assert!(
+            manager.0.read().unwrap().is_none(),
+            "the manager should be None before init"
+        );
+
         manager.init_manager();
-        assert!(manager.0.read().unwrap().is_some(), "the manager should be Some after init");
+        assert!(
+            manager.0.read().unwrap().is_some(),
+            "the manager should be Some after init"
+        );
     }
 
     #[test]
@@ -52,9 +62,16 @@ mod tests {
         let manager = DeferManager::default();
         manager.init_manager();
 
-        assert!(manager.0.read().unwrap().is_some(), "the manager should be Some before reset");
+        assert!(
+            manager.0.read().unwrap().is_some(),
+            "the manager should be Some before reset"
+        );
+
         manager.reset_runner();
-        assert!(manager.0.read().unwrap().is_none(), "the manager should be None after reset");
+        assert!(
+            manager.0.read().unwrap().is_none(),
+            "the manager should be None after reset"
+        );
     }
 
     #[test]
@@ -62,9 +79,16 @@ mod tests {
         let manager = DeferManager::default();
         manager.init_manager();
 
-        assert!(manager.0.read().unwrap().is_some(), "the manager should be Some before set");
+        assert!(
+            manager.0.read().unwrap().is_some(),
+            "the manager should be Some before set"
+        );
+
         manager.set_runner(DefaultRunner::new());
-        assert!(manager.0.read().unwrap().is_some(), "the manager should be Some after set");
+        assert!(
+            manager.0.read().unwrap().is_some(),
+            "the manager should be Some after set"
+        );
     }
 
     #[test]

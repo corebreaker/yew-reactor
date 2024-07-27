@@ -1,5 +1,9 @@
 use super::{state::ValueState, message::Message, properties::ValueProps};
-use crate::{signal::{Signal, KeyedCollection}, css::CssClasses};
+use crate::{
+    signal::{Signal, KeyedCollection},
+    css::CssClasses,
+};
+
 use yew::{AttrValue, Component, Context, Html, Properties};
 use std::marker::PhantomData;
 
@@ -54,8 +58,8 @@ impl<C: KeyedCollection + 'static> Eq for Props<C> {}
 
 pub struct Item<T: ToString + 'static, C: KeyedCollection<Value = T> + 'static> {
     state: ValueState<Props<C>, Self>,
-    ty: PhantomData<T>,
-    c: PhantomData<C>,
+    ty:    PhantomData<T>,
+    c:     PhantomData<C>,
 }
 
 impl<T: ToString + 'static, C: KeyedCollection<Value = T> + 'static> Component for Item<T, C> {

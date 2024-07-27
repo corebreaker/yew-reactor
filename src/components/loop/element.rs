@@ -10,7 +10,7 @@ pub enum ElementMsg {
 
 #[derive(Properties)]
 pub(crate) struct Props<T: Clone + Default + 'static> {
-    pub(crate) value: Signal<Option<T>>,
+    pub(crate) value:    Signal<Option<T>>,
     pub(crate) children: Children,
 }
 
@@ -24,9 +24,9 @@ impl<T: Clone + Default + 'static> Eq for Props<T> {}
 
 pub(crate) struct LoopElement<T: Clone + Default + 'static> {
     condition: bool,
-    signal: Signal<T>,
-    children: Html,
-    ty: PhantomData<T>,
+    signal:    Signal<T>,
+    children:  Html,
+    ty:        PhantomData<T>,
 }
 
 impl<T: Clone + Default + 'static> LoopElement<T> {
@@ -50,7 +50,7 @@ impl<T: Clone + Default + 'static> Component for LoopElement<T> {
 
             props.value.with(move |v| match v {
                 Some(v) => (Self::make_body(v, children), rt.create_signal(v.clone())),
-                None => (html!(), rt.create_signal(T::default()))
+                None => (html!(), rt.create_signal(T::default())),
             })
         };
 
@@ -91,7 +91,7 @@ impl<T: Clone + Default + 'static> Component for LoopElement<T> {
         let changed = {
             let children = when.with(|v| match v {
                 Some(v) => Self::make_body(v, children.clone()),
-                None => html!()
+                None => html!(),
             });
 
             let changed = self.children != children;

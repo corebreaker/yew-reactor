@@ -55,7 +55,9 @@ mod tests {
     #[test]
     fn test_keyed_collection_for_hash_map() {
         let mut map = HashMap::new();
-        let keys = vec![String::from("a"), String::from("b")].into_iter().collect::<HashSet<_>>();
+        let keys = vec![String::from("a"), String::from("b")]
+            .into_iter()
+            .collect::<HashSet<_>>();
 
         map.insert("a".to_string(), 1);
         map.insert("b".to_string(), 2);
@@ -69,7 +71,9 @@ mod tests {
     #[test]
     fn test_keyed_collection_for_btree_map() {
         let mut map = BTreeMap::new();
-        let keys = vec![String::from("a"), String::from("b")].into_iter().collect::<HashSet<_>>();
+        let keys = vec![String::from("a"), String::from("b")]
+            .into_iter()
+            .collect::<HashSet<_>>();
 
         map.insert("a".to_string(), 1);
         map.insert("b".to_string(), 2);
@@ -83,7 +87,9 @@ mod tests {
     #[test]
     fn test_keyed_collection_for_vec() {
         let vec = vec![1, 2, 3];
-        let keys = vec![String::from("0"), String::from("1"), String::from("2")].into_iter().collect::<HashSet<_>>();
+        let keys = vec![String::from("0"), String::from("1"), String::from("2")]
+            .into_iter()
+            .collect::<HashSet<_>>();
 
         assert_eq!(vec.keyed_get("0"), Some(&1));
         assert_eq!(vec.keyed_get("1"), Some(&2));

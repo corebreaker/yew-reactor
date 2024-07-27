@@ -1,6 +1,6 @@
 mod future;
-mod spawner;
 mod generator;
+mod spawner;
 
 pub mod generators;
 

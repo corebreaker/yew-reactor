@@ -1,6 +1,6 @@
-mod stall;
 mod function;
-mod world;
 mod sleep;
+mod stall;
+mod world;
 
 pub(in super::super) use world::Actions;

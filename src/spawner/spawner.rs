@@ -42,9 +42,16 @@ mod tests {
     fn test_init_spawner() {
         let spawner = Spawner::default();
 
-        assert!(spawner.0.read().unwrap().is_none(), "the spawner should be None before init");
+        assert!(
+            spawner.0.read().unwrap().is_none(),
+            "the spawner should be None before init"
+        );
+
         spawner.init_spawner();
-        assert!(spawner.0.read().unwrap().is_some(), "the spawner should be Some after init");
+        assert!(
+            spawner.0.read().unwrap().is_some(),
+            "the spawner should be Some after init"
+        );
     }
 
     #[test]
@@ -52,18 +59,32 @@ mod tests {
         let spawner = Spawner::default();
         spawner.init_spawner();
 
-        assert!(spawner.0.read().unwrap().is_some(), "the spawner should be Some before reset");
+        assert!(
+            spawner.0.read().unwrap().is_some(),
+            "the spawner should be Some before reset"
+        );
+
         spawner.reset_generator();
-        assert!(spawner.0.read().unwrap().is_none(), "the spawner should be None after reset");
+        assert!(
+            spawner.0.read().unwrap().is_none(),
+            "the spawner should be None after reset"
+        );
     }
 
     #[test]
     fn test_set_generator() {
         let spawner = Spawner::default();
 
-        assert!(spawner.0.read().unwrap().is_none(), "the spawner should be None before init");
+        assert!(
+            spawner.0.read().unwrap().is_none(),
+            "the spawner should be None before init"
+        );
+
         spawner.set_generator(DefaultSpawner);
-        assert!(spawner.0.read().unwrap().is_some(), "the spawner should be Some after set");
+        assert!(
+            spawner.0.read().unwrap().is_some(),
+            "the spawner should be Some after set"
+        );
     }
 
     #[test]

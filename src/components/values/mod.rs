@@ -1,10 +1,7 @@
 mod item;
-mod value;
-mod state;
 mod message;
 mod properties;
+mod state;
+mod value;
 
-pub use self::{
-    item::Item,
-    value::Value,
-};
+pub use self::{item::Item, value::Value};

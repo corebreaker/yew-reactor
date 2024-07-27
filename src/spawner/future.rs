@@ -1,6 +1,12 @@
 use crate::backtrace::get_backtrace;
 use futures::FutureExt;
-use std::{task::{Context, Poll}, pin::Pin, future::Future, panic::UnwindSafe, any::Any};
+use std::{
+    task::{Context, Poll},
+    pin::Pin,
+    future::Future,
+    panic::UnwindSafe,
+    any::Any,
+};
 
 pub type FutureVoid = LocalFuture<()>;
 
@@ -20,7 +26,7 @@ impl<O> LocalFuture<O> {
                             None => match err.downcast_ref::<String>() {
                                 Some(err) => format!("Panic: {err}"),
                                 None => format!("Panicking for any reason with type {:?}", err.type_id()),
-                            }
+                            },
                         };
 
                         let backtrace = get_backtrace(2);
@@ -50,7 +56,10 @@ impl<O> UnwindSafe for LocalFuture<O> {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::{atomic::{AtomicUsize, Ordering}, Arc};
+    use std::sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    };
 
     #[tokio::test]
     async fn test_local_future() {
@@ -61,7 +70,8 @@ mod tests {
 
             LocalFuture::new(async move {
                 value.fetch_add(1, Ordering::Relaxed);
-            }).await;
+            })
+            .await;
         }
 
         assert_eq!(value.load(Ordering::Relaxed), 1, "local future should be executed");

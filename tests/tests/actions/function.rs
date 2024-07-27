@@ -1,5 +1,8 @@
 use yew_reactor::spawner::LocalFuture;
-use std::{fmt::{Debug, Formatter, Result as FmtResult}, sync::Arc};
+use std::{
+    fmt::{Debug, Formatter, Result as FmtResult},
+    sync::Arc,
+};
 
 #[derive(Clone)]
 pub(super) struct Function {

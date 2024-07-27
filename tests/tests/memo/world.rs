@@ -6,29 +6,36 @@ use super::{
     value::Value,
 };
 
-use yew_reactor::{signal::{Signal, Runtime}, spawner::generators::TaskSpawner};
+use yew_reactor::{
+    signal::{Signal, Runtime},
+    spawner::generators::TaskSpawner,
+};
+
 use cucumber_trellis::CucumberTest;
 use cucumber::{given, then, when, World};
-use std::{cell::{RefCell, Cell}, sync::Arc};
+use std::{
+    cell::{RefCell, Cell},
+    sync::Arc,
+};
 
 const THE_KEY: &'static str = "the-key";
 
 #[derive(World, Default, Debug)]
 pub(in super::super::super) struct MemoFunctions {
-    rt: Option<Arc<Runtime>>,
-    signal: Option<Signal<String>>,
-    value: Option<Arc<RefCell<String>>>,
-    last_value: Option<Arc<RefCell<String>>>,
-    function: Option<Function>,
-    update_counter: Option<Arc<Cell<usize>>>,
-    call_counter: Option<Arc<Cell<usize>>>,
-    call_flag: Option<Arc<Cell<bool>>>,
-    collection: Option<Signal<Collection>>,
-    keyed_signal: Option<Signal<Option<Value>>>,
-    keyed_value: Option<Value>,
+    rt:                Option<Arc<Runtime>>,
+    signal:            Option<Signal<String>>,
+    value:             Option<Arc<RefCell<String>>>,
+    last_value:        Option<Arc<RefCell<String>>>,
+    function:          Option<Function>,
+    update_counter:    Option<Arc<Cell<usize>>>,
+    call_counter:      Option<Arc<Cell<usize>>>,
+    call_flag:         Option<Arc<Cell<bool>>>,
+    collection:        Option<Signal<Collection>>,
+    keyed_signal:      Option<Signal<Option<Value>>>,
+    keyed_value:       Option<Value>,
     keyed_other_value: Option<Value>,
     keyed_signal_kind: KeyedSignalKind,
-    effect_value: Option<Arc<RefCell<Value>>>,
+    effect_value:      Option<Arc<RefCell<Value>>>,
 }
 
 impl CucumberTest for MemoFunctions {
@@ -69,7 +76,9 @@ impl MemoFunctions {
     }
 
     fn has_keyed_signal_kind(&self, kind: KeyedSignalKind) -> bool {
-        self.keyed_signal_kind.has_kind(kind).expect("Keyed signal kind not set")
+        self.keyed_signal_kind
+            .has_kind(kind)
+            .expect("Keyed signal kind not set")
     }
 
     fn collection(&self) -> Signal<Collection> {
@@ -85,7 +94,10 @@ impl MemoFunctions {
     }
 
     fn keyed_other_value(&self) -> Value {
-        self.keyed_other_value.as_ref().cloned().expect("Keyed other value not set")
+        self.keyed_other_value
+            .as_ref()
+            .cloned()
+            .expect("Keyed other value not set")
     }
 
     fn effect_value(&self) -> Arc<RefCell<Value>> {
@@ -97,14 +109,20 @@ impl MemoFunctions {
 
 #[given(expr = "a created runtime instance")]
 fn given_context(world: &mut MemoFunctions) {
-    world.rt.replace(Runtime::new().with_spawn_generator(TaskSpawner::new()).with_defer_runner(RunnerForTests));
+    world.rt.replace(
+        Runtime::new()
+            .with_spawn_generator(TaskSpawner::new())
+            .with_defer_runner(RunnerForTests),
+    );
 }
 
 // Rule: Creating a memo function will create a signal which will notify subscribers when the function returns changes
 
 #[given(expr = "a signal is created from the runtime instance")]
 fn given_signal(world: &mut MemoFunctions) {
-    world.signal.replace(world.rt().create_signal(String::from("any-value")));
+    world
+        .signal
+        .replace(world.rt().create_signal(String::from("any-value")));
 }
 
 #[given(expr = "a function that returns a value")]
@@ -197,7 +215,11 @@ fn when_same_value_is_set_to_signal(world: &mut MemoFunctions) {
 fn then_function_is_called_to_get_value_from_signal(world: &mut MemoFunctions) {
     let last_value = world.last_value().borrow().clone();
 
-    assert!(world.call_flag().get(), "function should be called with the initial value: last value={last_value}");
+    assert!(
+        world.call_flag().get(),
+        "function should be called with the initial value: last value={last_value}"
+    );
+
     assert_eq!(
         world.call_counter().get(),
         2,
@@ -207,7 +229,12 @@ fn then_function_is_called_to_get_value_from_signal(world: &mut MemoFunctions) {
 
 #[then(expr = "the signal notifies its subscribers with the new value")]
 fn then_signal_notifies_subscribers_with_new_value(world: &mut MemoFunctions) {
-    assert_eq!(world.update_counter().get(), 2, "signal should notify its subscribers with the new value");
+    assert_eq!(
+        world.update_counter().get(),
+        2,
+        "signal should notify its subscribers with the new value"
+    );
+
     assert_eq!(
         world.value().borrow().as_str(),
         "new-value",
@@ -217,7 +244,12 @@ fn then_signal_notifies_subscribers_with_new_value(world: &mut MemoFunctions) {
 
 #[then(expr = "the signal does not notify its subscribers")]
 fn then_signal_does_not_notify_subscribers(world: &mut MemoFunctions) {
-    assert_eq!(world.update_counter().get(), 1, "signal should not notify its subscribers");
+    assert_eq!(
+        world.update_counter().get(),
+        1,
+        "signal should not notify its subscribers"
+    );
+
     assert_eq!(
         world.value().borrow().as_str(),
         "any-value",
@@ -246,7 +278,10 @@ fn given_signal_created_from_collection_signal_with_defined_key(world: &mut Memo
         let value = Value::String(String::from("any-value"));
 
         world.keyed_value.replace(value.clone());
-        world.keyed_other_value.replace(Value::String(String::from("new-value")));
+        world
+            .keyed_other_value
+            .replace(Value::String(String::from("new-value")));
+
         collection.update(|c| {
             c.put(THE_KEY, value);
         });
@@ -265,12 +300,16 @@ fn given_signal_created_from_collection_signal_with_defined_key(world: &mut Memo
 
 #[given(expr = "a keyed signal is created from the collection signal")]
 fn given_keyed_signal_created_from_collection_signal(world: &mut MemoFunctions) {
-    world.keyed_signal.replace(world.rt().create_keyed_signal(world.collection(), THE_KEY));
+    world
+        .keyed_signal
+        .replace(world.rt().create_keyed_signal(world.collection(), THE_KEY));
 }
 
 #[when(expr = "the keyed signal is created")]
 fn when_keyed_signal_is_created(world: &mut MemoFunctions) {
-    world.keyed_signal.replace(world.rt().create_keyed_signal(world.collection(), THE_KEY));
+    world
+        .keyed_signal
+        .replace(world.rt().create_keyed_signal(world.collection(), THE_KEY));
 }
 
 #[then(expr = "the initial value for the key in the collection si set to the collection signal")]
@@ -307,7 +346,12 @@ fn when_same_value_located_at_key_in_collection_is_set_through_collection_signal
 
 #[then(expr = "the keyed signal does not notify its subscribers")]
 fn then_keyed_signal_does_not_notify_subscribers(world: &mut MemoFunctions) {
-    assert_eq!(world.call_counter().get(), 1, "keyed signal should not notify its subscribers");
+    assert_eq!(
+        world.call_counter().get(),
+        1,
+        "keyed signal should not notify its subscribers"
+    );
+
     assert_eq!(
         world.effect_value().borrow().clone(),
         world.keyed_value(),
@@ -326,7 +370,12 @@ fn when_signal_value_located_at_key_in_collection_has_changed(world: &mut MemoFu
 
 #[then(expr = "the keyed signal notifies its subscribers with the new value")]
 fn then_keyed_signal_notifies_subscribers_with_new_value(world: &mut MemoFunctions) {
-    assert_eq!(world.call_counter().get(), 2, "keyed signal should notify its subscribers with the new value");
+    assert_eq!(
+        world.call_counter().get(),
+        2,
+        "keyed signal should notify its subscribers with the new value"
+    );
+
     assert_eq!(
         world.effect_value().borrow().clone(),
         world.keyed_other_value(),

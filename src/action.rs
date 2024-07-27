@@ -11,16 +11,18 @@ use std::{
 
 #[derive(Clone)]
 pub struct Action<I, O: UnwindSafe + 'static> {
-    id: Uuid,
-    runtime: Arc<Runtime>,
-    pending: Arc<Mutex<bool>>,
-    value: Signal<Option<O>>,
+    id:        Uuid,
+    runtime:   Arc<Runtime>,
+    pending:   Arc<Mutex<bool>>,
+    value:     Signal<Option<O>>,
     action_fn: Rc<dyn Fn(I) -> LocalFuture<O>>,
 }
 
 impl<I, O: UnwindSafe + 'static> Action<I, O> {
     pub(crate) fn new<R, F>(runtime: Arc<Runtime>, action_fn: F) -> Self
-        where R: Future<Output = O> + UnwindSafe + 'static, F: Fn(I) -> R + 'static {
+    where
+        R: Future<Output = O> + UnwindSafe + 'static,
+        F: Fn(I) -> R + 'static, {
         let id = new_id();
         let pending = Arc::new(Mutex::new(false));
         let value = Arc::clone(&runtime).create_signal(None::<O>);
@@ -67,11 +69,15 @@ impl<I, O: UnwindSafe + 'static> Action<I, O> {
         let pending = Arc::clone(&self.pending);
 
         self.runtime().spawn(async move {
-            output.untracked_update(|v| { v.take(); });
+            output.untracked_update(|v| {
+                v.take();
+            });
 
             let res = fut.await;
 
-            output.update(|o| { o.replace(res); });
+            output.update(|o| {
+                o.replace(res);
+            });
 
             {
                 let pending_lock = Arc::clone(&pending);

@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   checks:
     docker:
-      - image: corebreaker/rust-devtools-circleci:rust-1.80.0-v0.3.13
+      - image: corebreaker/rust-devtools-circleci:rust-1.80.0-v0.3.14
     steps:
       - checkout
       - run:
@@ -15,7 +15,7 @@ jobs:
 
   coverage:
     docker:
-      - image: corebreaker/rust-devtools-circleci:rust-1.80.0-v0.3.13
+      - image: corebreaker/rust-devtools-circleci:rust-1.80.0-v0.3.14
     steps:
       - checkout
       - run:

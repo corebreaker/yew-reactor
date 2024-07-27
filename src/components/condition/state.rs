@@ -8,7 +8,7 @@ pub enum Message {
 
 #[derive(Properties)]
 pub struct Props<T: AsBool + 'static> {
-    pub when: Signal<T>,
+    pub when:     Signal<T>,
     pub children: Html,
 }
 
@@ -22,8 +22,8 @@ impl<T: AsBool + 'static> Eq for Props<T> {}
 
 pub struct ConditionState<T: AsBool + 'static, C: Component<Message = Message, Properties = Props<T>>> {
     condition: bool,
-    ty: PhantomData<T>,
-    c: PhantomData<C>,
+    ty:        PhantomData<T>,
+    c:         PhantomData<C>,
 }
 
 impl<T: AsBool, C: Component<Message = Message, Properties = Props<T>>> ConditionState<T, C> {
@@ -41,8 +41,8 @@ impl<T: AsBool, C: Component<Message = Message, Properties = Props<T>>> Conditio
 
         Self {
             condition: false,
-            ty: PhantomData,
-            c: PhantomData,
+            ty:        PhantomData,
+            c:         PhantomData,
         }
     }
 

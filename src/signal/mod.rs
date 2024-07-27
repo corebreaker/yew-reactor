@@ -1,13 +1,9 @@
 mod id;
-mod signal;
-mod runtime;
 mod keyed_collection;
+mod runtime;
+mod signal;
 
-pub use self::{
-    signal::Signal,
-    runtime::Runtime,
-    keyed_collection::KeyedCollection,
-};
+pub use self::{signal::Signal, runtime::Runtime, keyed_collection::KeyedCollection};
 
 // no-coverage:start
 #[cfg(test)]

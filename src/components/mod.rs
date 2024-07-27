@@ -1,16 +1,9 @@
-mod values;
-mod r#loop;
 mod condition;
+mod r#loop;
+mod values;
 
 pub use self::{
     r#loop::For,
-    values::{
-        Item,
-        Value,
-    },
-    condition::{
-        IfTrue,
-        IfFalse,
-        AsBool,
-    }
+    values::{Item, Value},
+    condition::{IfTrue, IfFalse, AsBool},
 };
