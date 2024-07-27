@@ -7,6 +7,7 @@ use std::{
     panic::UnwindSafe,
     any::Any,
 };
+use std::fmt::Display;
 
 pub type FutureVoid = LocalFuture<()>;
 
@@ -25,7 +26,7 @@ impl<O> LocalFuture<O> {
                             Some(err) => format!("Panic: {err}"),
                             None => match err.downcast_ref::<String>() {
                                 Some(err) => format!("Panic: {err}"),
-                                None => format!("Panicking for any reason with type {:?}", err.type_id()),
+                                None => String::from("Panicking for any reason with another type"),
                             },
                         };
 
@@ -56,9 +57,12 @@ impl<O> UnwindSafe for LocalFuture<O> {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::{
-        atomic::{AtomicUsize, Ordering},
-        Arc,
+    use std::{
+        panic::panic_any,
+        sync::{
+            atomic::{AtomicUsize, Ordering},
+            Arc,
+        },
     };
 
     #[tokio::test]
@@ -75,6 +79,69 @@ mod tests {
         }
 
         assert_eq!(value.load(Ordering::Relaxed), 1, "local future should be executed");
+    }
+
+    fn check_panic_result<R>(err: Result<R, Box<dyn Any + Send>>, msg: &str) {
+        match err {
+            Err(err) => match err.downcast_ref::<String>() {
+                Some(err) => {
+                    assert_eq!(err.lines().next(), Some(msg), "panic message should be `{msg}`",);
+                }
+                _ => {
+                    panic!("panic should be a string");
+                }
+            },
+            Ok(_) => {
+                panic!("local future should panic")
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn test_local_future_panic() {
+        let value = Arc::new(AtomicUsize::new(0));
+
+        {
+            let value = Arc::clone(&value);
+            let result = LocalFuture::new(async move {
+                value.fetch_add(1, Ordering::Relaxed);
+                panic_any(1234usize);
+            })
+            .catch_unwind()
+            .await;
+
+            check_panic_result(result, "Panicking for any reason with another type");
+        }
+
+        {
+            let value = Arc::clone(&value);
+            let result = LocalFuture::new(async move {
+                value.fetch_add(1, Ordering::Relaxed);
+                panic!("Panic with &str");
+            })
+            .catch_unwind()
+            .await;
+
+            check_panic_result(result, "Panic: Panic with &str");
+        }
+
+        {
+            let value = Arc::clone(&value);
+            let result = LocalFuture::new(async move {
+                value.fetch_add(1, Ordering::Relaxed);
+                panic_any(String::from("Panic with String"));
+            })
+            .catch_unwind()
+            .await;
+
+            check_panic_result(result, "Panic: Panic with String");
+        }
+
+        assert_eq!(
+            value.load(Ordering::Relaxed),
+            3,
+            "local future should be executed 3 times"
+        );
     }
 }
 // no-coverage:stop

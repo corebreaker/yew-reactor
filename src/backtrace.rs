@@ -1,6 +1,7 @@
 use backtrace::Backtrace;
 use std::ffi::c_void;
 
+// no-coverage:start
 #[inline(never)]
 pub(crate) fn get_backtrace(skip: usize) -> Backtrace {
     let addr = (get_backtrace as usize) as *mut c_void;
@@ -14,3 +15,4 @@ pub(crate) fn get_backtrace(skip: usize) -> Backtrace {
 
     Backtrace::from(frames)
 }
+// no-coverage:stop

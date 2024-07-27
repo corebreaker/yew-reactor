@@ -20,7 +20,7 @@ jobs:
       - checkout
       - run:
           name: Make coverage
-          command: "coverage.sh -i './tests/**' -i './src/components/**' -i ./src/backtrace.rs"
+          command: "coverage.sh -i './tests/**' -i './src/components/**'"
       - run:
           name: Upload Coverage Result To Coveralls
           command: "coveralls circleci -r yew-reactor -D target -t $COVERALLS_REPO_TOKEN target/coverage/coveralls.json"

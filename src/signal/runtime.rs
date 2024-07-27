@@ -386,7 +386,9 @@ impl Runtime {
             );
 
             pending_remove
+            // no-coverage:start
         };
+        // no-coverage:stop
 
         for id in to_remove {
             self.remove_signal(id);

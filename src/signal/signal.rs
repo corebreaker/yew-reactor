@@ -22,7 +22,9 @@ impl<T: 'static> Signal<T> {
             id,
             registered: AtomicBool::new(false),
             ty: PhantomData,
+            // no-coverage:start
         }
+        // no-coverage:stop
     }
 
     pub fn runtime(&self) -> Arc<Runtime> {
