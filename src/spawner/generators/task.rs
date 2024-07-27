@@ -20,7 +20,11 @@ impl SpawnGenerator for TaskSpawner {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::{atomic::{AtomicUsize, AtomicBool, Ordering}, Arc};
+    use std::sync::{
+        atomic::{AtomicUsize, AtomicBool, Ordering},
+        Arc,
+    };
+
     use tokio::task::yield_now;
 
     #[tokio::test]

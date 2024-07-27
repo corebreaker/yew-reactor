@@ -1,13 +1,16 @@
-use std::{time::{Duration, Instant}, future::Future};
+use std::{
+    time::{Duration, Instant},
+    future::Future,
+};
 
 pub(super) struct Sleep {
-    instant: Instant
+    instant: Instant,
 }
 
 impl Sleep {
     pub(super) fn new() -> Self {
         Self {
-            instant: Instant::now()
+            instant: Instant::now(),
         }
     }
 }

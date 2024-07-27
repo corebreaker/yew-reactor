@@ -1,20 +1,24 @@
 use super::runner::RunnerForTests;
-use yew_reactor::{spawner::generators::TaskSpawner, signal::{Runtime, Signal}};
+use yew_reactor::{
+    spawner::generators::TaskSpawner,
+    signal::{Runtime, Signal},
+};
+
 use cucumber::{given, then, when, World};
 use cucumber_trellis::CucumberTest;
 use std::{sync::Arc, cell::Cell};
 
 #[derive(World, Default, Debug)]
 pub(in super::super) struct Signals {
-    rt: Option<Arc<Runtime>>,
-    signal: Option<Signal<usize>>,
-    signal_copy: Option<Signal<usize>>,
-    signal_value: Option<usize>,
-    call_count: Option<Arc<Cell<usize>>>,
-    call_value: Option<Arc<Cell<usize>>>,
+    rt:             Option<Arc<Runtime>>,
+    signal:         Option<Signal<usize>>,
+    signal_copy:    Option<Signal<usize>>,
+    signal_value:   Option<usize>,
+    call_count:     Option<Arc<Cell<usize>>>,
+    call_value:     Option<Arc<Cell<usize>>>,
     expected_value: Option<usize>,
-    dest_signal: Option<Signal<usize>>,
-    other_signal: Option<Signal<usize>>,
+    dest_signal:    Option<Signal<usize>>,
+    other_signal:   Option<Signal<usize>>,
 }
 
 impl Signals {
@@ -63,7 +67,11 @@ impl CucumberTest for Signals {
 
 #[given(expr = "a created runtime instance")]
 fn given_context(world: &mut Signals) {
-    world.rt.replace(Runtime::new().with_spawn_generator(TaskSpawner::new()).with_defer_runner(RunnerForTests));
+    world.rt.replace(
+        Runtime::new()
+            .with_spawn_generator(TaskSpawner::new())
+            .with_defer_runner(RunnerForTests),
+    );
 }
 
 // Rule: A signal can be accessed from a copy, this is the right way to access the signal
@@ -128,7 +136,9 @@ fn given_another_signal_from_runtime(world: &mut Signals) {
 
 #[when(expr = "the two signals are combined through a function")]
 fn when_signals_combined(world: &mut Signals) {
-    world.signal_value.replace(world.signal().with_another(world.signal_copy(), |v1, v2| v1 * v2));
+    world
+        .signal_value
+        .replace(world.signal().with_another(world.signal_copy(), |v1, v2| v1 * v2));
 }
 
 #[then(expr = "the combined value should be returned")]
@@ -158,8 +168,18 @@ fn when_signal_subscribed_to_effect(world: &mut Signals) {
 
 #[then(expr = "the effect is called")]
 fn then_effect_is_called(world: &mut Signals) {
-    assert_ne!(world.call_count().get(), 0, "the effect should be notified so the flag should be set");
-    assert_eq!(world.signal().get(), world.signal_value(), "the signal value should be set");
+    assert_ne!(
+        world.call_count().get(),
+        0,
+        "the effect should be notified so the flag should be set"
+    );
+
+    assert_eq!(
+        world.signal().get(),
+        world.signal_value(),
+        "the signal value should be set"
+    );
+
     assert_eq!(
         world.call_value().get(),
         world.expected_value(),
@@ -169,8 +189,18 @@ fn then_effect_is_called(world: &mut Signals) {
 
 #[then(expr = "the modification should notify the effect")]
 fn then_modification_notifies_effect(world: &mut Signals) {
-    assert_eq!(world.call_count().get(), 2, "the effect should be notified so the flag should be set");
-    assert_eq!(world.signal().get(), world.signal_value(), "the signal value should be set");
+    assert_eq!(
+        world.call_count().get(),
+        2,
+        "the effect should be notified so the flag should be set"
+    );
+
+    assert_eq!(
+        world.signal().get(),
+        world.signal_value(),
+        "the signal value should be set"
+    );
+
     assert_eq!(
         world.call_value().get(),
         world.expected_value(),
@@ -203,13 +233,24 @@ fn when_signal_changes_value_with_untracked_change(world: &mut Signals) {
 
 #[then(expr = "the modification should not notify the effect")]
 fn then_modification_does_not_notifie_effect(world: &mut Signals) {
-    assert_eq!(world.call_count().get(), 1, "the effect should not be notified so the flag should not be set");
-    assert_eq!(world.signal().get(), world.signal_value(), "the signal value should be set");
+    assert_eq!(
+        world.call_count().get(),
+        1,
+        "the effect should not be notified so the flag should not be set"
+    );
+
+    assert_eq!(
+        world.signal().get(),
+        world.signal_value(),
+        "the signal value should be set"
+    );
+
     assert_eq!(
         world.call_value().get(),
         world.expected_value(),
         "the effect should not be notified so the value should stay to the previous value",
     );
+
     assert_ne!(
         world.call_value().get(),
         world.signal_value(),
@@ -301,8 +342,17 @@ fn given_effect_created_from_signal_s(world: &mut Signals) {
 
 #[then(expr = "the effect should be called")]
 fn then_effect_should_be_called(world: &mut Signals) {
-    assert_eq!(world.call_count().get(), 2, "the effect should be notified so the flag should be set");
-    assert_eq!(world.call_value().get(), 123456, "the effect should be notified so the value should be set");
+    assert_eq!(
+        world.call_count().get(),
+        2,
+        "the effect should be notified so the flag should be set"
+    );
+
+    assert_eq!(
+        world.call_value().get(),
+        123456,
+        "the effect should be notified so the value should be set"
+    );
 }
 
 #[given(expr = "another signal is created from the runtime instance, the first destination signal [D1]")]

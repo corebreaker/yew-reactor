@@ -1,5 +1,5 @@
 use super::element::LoopElement;
-use crate::{signal::{KeyedCollection, Signal}};
+use crate::signal::{KeyedCollection, Signal};
 use yew::{Component, Context, Html, Properties, Children, html};
 use std::marker::PhantomData;
 
@@ -9,25 +9,25 @@ pub enum Msg {
 
 #[derive(Properties)]
 pub struct Props<C: KeyedCollection> {
-    pub values: Signal<C>,
+    pub values:   Signal<C>,
     pub children: Children,
 }
 
-impl <C: KeyedCollection> PartialEq for Props<C> {
+impl<C: KeyedCollection> PartialEq for Props<C> {
     fn eq(&self, other: &Self) -> bool {
         self.values == other.values
     }
 }
 
-impl <C: KeyedCollection> Eq for Props<C> {}
+impl<C: KeyedCollection> Eq for Props<C> {}
 
 pub struct For<T: Clone + PartialEq + Default + 'static, C: KeyedCollection> {
     values: Vec<Html>,
-    t: PhantomData<T>,
-    c: PhantomData<C>,
+    t:      PhantomData<T>,
+    c:      PhantomData<C>,
 }
 
-impl <T: Clone + PartialEq + Default + 'static, C: KeyedCollection<Value = T>> For<T, C> {
+impl<T: Clone + PartialEq + Default + 'static, C: KeyedCollection<Value = T>> For<T, C> {
     fn make_item(children: &Children, values: Signal<C>, key: &str) -> Html {
         let value = values.runtime().create_keyed_signal(values, key);
         let key = key.to_string();
@@ -42,7 +42,11 @@ impl <T: Clone + PartialEq + Default + 'static, C: KeyedCollection<Value = T>> F
     fn make_values(children: &Children, values: Signal<C>) -> Vec<Html> {
         let list = values.clone();
 
-        values.with(|c| c.iter_keys().map(|k| Self::make_item(children, list.clone(), &k)).collect::<Vec<_>>())
+        values.with(|c| {
+            c.iter_keys()
+                .map(|k| Self::make_item(children, list.clone(), &k))
+                .collect::<Vec<_>>()
+        })
     }
 }
 
@@ -53,8 +57,8 @@ impl<T: Clone + PartialEq + Default + 'static, C: KeyedCollection<Value = T>> Co
     fn create(ctx: &Context<Self>) -> Self {
         Self {
             values: Self::make_values(&ctx.props().children, ctx.props().values.clone()),
-            t: PhantomData,
-            c: PhantomData,
+            t:      PhantomData,
+            c:      PhantomData,
         }
     }
 

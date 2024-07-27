@@ -1,20 +1,25 @@
 use super::runner::RunnerForTests;
-use yew_reactor::{signal::{Signal, Runtime}, spawner::generators::TaskSpawner, css::CssClasses as YrCssClasses};
+use yew_reactor::{
+    signal::{Signal, Runtime},
+    spawner::generators::TaskSpawner,
+    css::CssClasses as YrCssClasses,
+};
+
 use cucumber_trellis::CucumberTest;
 use cucumber::{given, then, when, World};
 use std::{sync::Arc, cell::RefCell};
 
 #[derive(World, Debug, Default)]
 pub(in super::super) struct CssClasses {
-    rt: Option<Arc<Runtime>>,
-    rt_copy: Option<Arc<Runtime>>,
-    instance: Option<YrCssClasses>,
+    rt:            Option<Arc<Runtime>>,
+    rt_copy:       Option<Arc<Runtime>>,
+    instance:      Option<YrCssClasses>,
     instance_copy: Option<YrCssClasses>,
-    effect_value: Option<Arc<RefCell<String>>>,
-    link: Option<YrCssClasses>,
-    signal: Option<Signal<String>>,
-    value: Option<String>,
-    count: usize,
+    effect_value:  Option<Arc<RefCell<String>>>,
+    link:          Option<YrCssClasses>,
+    signal:        Option<Signal<String>>,
+    value:         Option<String>,
+    count:         usize,
 }
 
 impl CssClasses {
@@ -59,7 +64,11 @@ impl CucumberTest for CssClasses {
 
 #[given(expr = "a created runtime instance")]
 fn given_context(world: &mut CssClasses) {
-    world.rt.replace(Runtime::new().with_spawn_generator(TaskSpawner::new()).with_defer_runner(RunnerForTests));
+    world.rt.replace(
+        Runtime::new()
+            .with_spawn_generator(TaskSpawner::new())
+            .with_defer_runner(RunnerForTests),
+    );
 }
 
 // Rule: An instance of `CssClasses` can be created
@@ -76,7 +85,11 @@ fn when_create_css_class(world: &mut CssClasses) {
 
 #[then(expr = "the CSS class instance is created")]
 fn then_css_class_instance_created(world: &mut CssClasses) {
-    assert_eq!(world.instance().values(), String::new(), "the value of CSS classes should be empty");
+    assert_eq!(
+        world.instance().values(),
+        String::new(),
+        "the value of CSS classes should be empty"
+    );
 }
 
 #[given(expr = "an instance of `CssClasses` created from the runtime instance")]
@@ -138,7 +151,10 @@ fn when_add_css_class(world: &mut CssClasses) {
 
 #[then(expr = "the CSS class is added to the instance of `CssClasses`")]
 fn then_css_class_is_added(world: &mut CssClasses) {
-    assert!(world.instance_copy().contains("this-class"), "the CSS class should be added");
+    assert!(
+        world.instance_copy().contains("this-class"),
+        "the CSS class should be added"
+    );
 }
 
 #[given(expr = "a CSS class is added to the instance of `CssClasses`")]
@@ -153,7 +169,10 @@ fn when_remove_css_class(world: &mut CssClasses) {
 
 #[then(expr = "the CSS class is removed from the instance of `CssClasses`")]
 fn then_css_class_is_removed(world: &mut CssClasses) {
-    assert!(!world.instance_copy().contains("this-class"), "the CSS class should be removed");
+    assert!(
+        !world.instance_copy().contains("this-class"),
+        "the CSS class should be removed"
+    );
 }
 
 #[when(expr = "a CSS class is toggled from the instance of `CssClasses`")]
@@ -170,20 +189,35 @@ fn when_replace_css_class(world: &mut CssClasses) {
 fn then_css_class_is_replaced(world: &mut CssClasses) {
     let values = world.instance_copy().sorted_values();
 
-    assert!(!world.instance_copy().contains("this-class"), "the old CSS class should be removed: {values}");
-    assert!(world.instance_copy().contains("that-class"), "the new CSS class should be added: {values}");
+    assert!(
+        !world.instance_copy().contains("this-class"),
+        "the old CSS class should be removed: {values}"
+    );
+
+    assert!(
+        world.instance_copy().contains("that-class"),
+        "the new CSS class should be added: {values}"
+    );
 }
 
 #[when(expr = "CSS classes is checked if it contains a CSS class")]
 fn when_check_css_class_contains(world: &mut CssClasses) {
-    let checked = if world.instance_copy().contains("this-class") {"contains"} else {"does not contain"};
+    let checked = if world.instance_copy().contains("this-class") {
+        "contains"
+    } else {
+        "does not contain"
+    };
 
     world.value.replace(String::from(checked));
 }
 
 #[then(expr = "the instance of `CssClasses` does not contain the CSS class")]
 fn then_css_class_does_not_contain(world: &mut CssClasses) {
-    assert_eq!(world.value(), "does not contain", "the CSS class should not be contained");
+    assert_eq!(
+        world.value(),
+        "does not contain",
+        "the CSS class should not be contained"
+    );
 }
 
 #[then(expr = "the instance of `CssClasses` contains the CSS class")]
@@ -231,7 +265,10 @@ fn when_add_css_class_to_first(world: &mut CssClasses) {
 
 #[then(expr = "the instance of `CssClasses` is notified")]
 fn then_instance_is_notified(world: &mut CssClasses) {
-    assert!(world.instance_copy().contains("another-class"), "the instance should be notified");
+    assert!(
+        world.instance_copy().contains("another-class"),
+        "the instance should be notified"
+    );
 }
 
 // Rule: A signal can be attached to an instance of `CssClasses` is a signal to change one CSS class
@@ -251,7 +288,10 @@ fn when_signal_notifies_change(world: &mut CssClasses) {
 
 #[then(expr = "the CSS classes have changed")]
 fn then_css_classes_have_changed(world: &mut CssClasses) {
-    assert!(world.instance_copy().contains("the-class"), "the CSS classes should have changed");
+    assert!(
+        world.instance_copy().contains("the-class"),
+        "the CSS classes should have changed"
+    );
 }
 
 #[given(expr = "a CSS class is set through the signal")]
@@ -266,6 +306,13 @@ fn when_new_value_set_through_signal(world: &mut CssClasses) {
 
 #[then(expr = "the old value is replaced by the new value in the CSS classes")]
 fn then_old_value_replaced_by_new_value(world: &mut CssClasses) {
-    assert!(!world.instance_copy().contains("the-class"), "the old value should be removed");
-    assert!(world.instance_copy().contains("another-class"), "the new value should be added");
+    assert!(
+        !world.instance_copy().contains("the-class"),
+        "the old value should be removed"
+    );
+
+    assert!(
+        world.instance_copy().contains("another-class"),
+        "the new value should be added"
+    );
 }

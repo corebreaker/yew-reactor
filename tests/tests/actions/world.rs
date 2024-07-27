@@ -1,16 +1,25 @@
 use super::{super::runner::RunnerForTests, function::Function, stall::Stall};
-use yew_reactor::{spawner::{generators::TaskSpawner, LocalFuture}, signal::Runtime, action::Action};
+use yew_reactor::{
+    spawner::{generators::TaskSpawner, LocalFuture},
+    signal::Runtime,
+    action::Action,
+};
+
 use cucumber_trellis::CucumberTest;
 use cucumber::{given, then, when, World};
-use std::{sync::{Arc, RwLock}, time::Duration, thread::sleep};
+use std::{
+    sync::{Arc, RwLock},
+    time::Duration,
+    thread::sleep,
+};
 
 #[derive(World, Debug, Default)]
 pub(in super::super::super) struct Actions {
-    rt: Option<Arc<Runtime>>,
-    func: Option<Function>,
+    rt:     Option<Arc<Runtime>>,
+    func:   Option<Function>,
     action: Option<Action<(), &'static str>>,
-    stall: Option<Arc<Stall>>,
-    value: Option<Arc<RwLock<String>>>,
+    stall:  Option<Arc<Stall>>,
+    value:  Option<Arc<RwLock<String>>>,
 }
 
 impl Actions {
@@ -43,14 +52,20 @@ impl CucumberTest for Actions {
 
 #[given(expr = "a created runtime instance")]
 fn given_context(world: &mut Actions) {
-    world.rt.replace(Runtime::new().with_spawn_generator(TaskSpawner::new()).with_defer_runner(RunnerForTests));
+    world.rt.replace(
+        Runtime::new()
+            .with_spawn_generator(TaskSpawner::new())
+            .with_defer_runner(RunnerForTests),
+    );
 }
 
 // Rule: An action must be created from an asynchronous function
 
 #[given(expr = "an async function")]
 fn given_async_func(world: &mut Actions) {
-    world.func.replace(Function::new("hello", || LocalFuture::new(async { "hello" })));
+    world
+        .func
+        .replace(Function::new("hello", || LocalFuture::new(async { "hello" })));
 }
 
 #[when(expr = "an action is created from the async function")]
@@ -163,7 +178,11 @@ fn when_async_func_has_been_executed(world: &mut Actions) {
 
 #[then(expr = "the return value of the async function is stored in the action")]
 fn then_return_value_of_async_func_is_stored(world: &mut Actions) {
-    assert_eq!(world.action().get(), Some("value"), r#"the stored value should be `Some("value")`"#);
+    assert_eq!(
+        world.action().get(),
+        Some("value"),
+        r#"the stored value should be `Some("value")`"#
+    );
 }
 
 #[then(expr = "the effect is notified with the return value of the async function")]

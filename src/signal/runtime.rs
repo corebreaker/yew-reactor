@@ -1,5 +1,16 @@
-use super::{id::{SignalId, EffectId}, KeyedCollection, Signal};
-use crate::{spawner::{Spawner, SpawnGenerator}, defer::{DeferManager, DeferRunner}, action::Action, css::CssClasses};
+use super::{
+    id::{SignalId, EffectId},
+    KeyedCollection,
+    Signal,
+};
+
+use crate::{
+    spawner::{Spawner, SpawnGenerator},
+    defer::{DeferManager, DeferRunner},
+    action::Action,
+    css::CssClasses,
+};
+
 use std::{
     sync::atomic::{AtomicUsize, Ordering},
     collections::{HashMap, HashSet},
@@ -15,16 +26,16 @@ type EffectFn = Arc<dyn Fn()>;
 
 #[derive(Default)]
 pub struct Runtime {
-    spawner: Spawner,
-    defer_manager: DeferManager,
-    signal_values: RwLock<HashMap<SignalId, SignalValue>>,
-    signal_refs: RwLock<HashMap<SignalId, AtomicUsize>>,
-    running_effect: RwLock<Option<EffectId>>,
-    signal_links: RwLock<HashMap<SignalId, SignalId>>,
-    reverse_links: RwLock<HashMap<SignalId, HashSet<SignalId>>>,
+    spawner:            Spawner,
+    defer_manager:      DeferManager,
+    signal_values:      RwLock<HashMap<SignalId, SignalValue>>,
+    signal_refs:        RwLock<HashMap<SignalId, AtomicUsize>>,
+    running_effect:     RwLock<Option<EffectId>>,
+    signal_links:       RwLock<HashMap<SignalId, SignalId>>,
+    reverse_links:      RwLock<HashMap<SignalId, HashSet<SignalId>>>,
     signal_subscribers: RwLock<HashMap<SignalId, HashSet<EffectId>>>,
-    effects: RwLock<HashMap<EffectId, EffectFn>>,
-    pending_remove: RwLock<Option<HashSet<SignalId>>>,
+    effects:            RwLock<HashMap<EffectId, EffectFn>>,
+    pending_remove:     RwLock<Option<HashSet<SignalId>>>,
 }
 
 impl Runtime {
@@ -61,7 +72,11 @@ impl Runtime {
     pub fn create_signal<T: 'static>(self: Arc<Self>, value: T) -> Signal<T> {
         let id = SignalId::new();
 
-        self.signal_values.write().unwrap().insert(id, Arc::new(RwLock::new(value)));
+        self.signal_values
+            .write()
+            .unwrap()
+            .insert(id, Arc::new(RwLock::new(value)));
+
         self.make_signal(id)
     }
 
@@ -71,7 +86,12 @@ impl Runtime {
 
     fn make_link(&self, dest: SignalId, src: SignalId) {
         self.signal_links.write().unwrap().insert(dest, src);
-        self.reverse_links.write().unwrap().entry(src).or_insert_with(HashSet::new).insert(dest);
+        self.reverse_links
+            .write()
+            .unwrap()
+            .entry(src)
+            .or_insert_with(HashSet::new)
+            .insert(dest);
     }
 
     pub(super) fn get_source_id(&self, mut id: SignalId) -> SignalId {
@@ -101,7 +121,8 @@ impl Runtime {
     }
 
     pub(super) fn inc_signal_ref(&self, id: SignalId) {
-        self.signal_refs.write()
+        self.signal_refs
+            .write()
             .unwrap()
             .entry(id)
             .or_insert(AtomicUsize::new(0))
@@ -109,10 +130,15 @@ impl Runtime {
     }
 
     pub(super) fn dec_signal_ref(&self, id: SignalId) -> usize {
-        self.signal_refs.write()
+        self.signal_refs
+            .write()
             .unwrap()
             .get_mut(&id)
-            .and_then(|count| count.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |v| Some(v.max(1) - 1)).ok())
+            .and_then(|count| {
+                count
+                    .fetch_update(Ordering::SeqCst, Ordering::SeqCst, |v| Some(v.max(1) - 1))
+                    .ok()
+            })
             .unwrap_or(1)
     }
 
@@ -153,7 +179,8 @@ impl Runtime {
 
     pub(super) fn add_subscriber(&self, signal_id: SignalId) -> bool {
         if let Some(effect_id) = self.running_effect.read().unwrap().clone() {
-            self.signal_subscribers.write()
+            self.signal_subscribers
+                .write()
                 .unwrap()
                 .entry(signal_id)
                 .or_insert_with(HashSet::new)
@@ -165,7 +192,9 @@ impl Runtime {
 
     pub(super) fn notify_subscribers(&self, signal_id: SignalId) {
         // get direct effect ids
-        let direct_effect_ids = self.signal_subscribers.read()
+        let direct_effect_ids = self
+            .signal_subscribers
+            .read()
             .unwrap()
             .get(&signal_id)
             .cloned()
@@ -174,7 +203,8 @@ impl Runtime {
         // get linked effect ids
         let linked_effect_ids = {
             let subscribers = self.signal_subscribers.read().unwrap();
-            self.signal_links.read()
+            self.signal_links
+                .read()
                 .unwrap()
                 .get(&signal_id)
                 .and_then(|linked_id| subscribers.get(linked_id))
@@ -222,7 +252,10 @@ impl Runtime {
 
     fn cleaning(&self, effect_id: EffectId) {
         // clean signal refs
-        let signal_refs = self.signal_refs.read().unwrap()
+        let signal_refs = self
+            .signal_refs
+            .read()
+            .unwrap()
             .iter()
             .filter(|(_, count)| count.load(Ordering::SeqCst) == 0)
             .map(|(id, _)| *id)
@@ -233,7 +266,14 @@ impl Runtime {
         }
 
         // clean up unreferenced effects
-        if !self.signal_subscribers.read().unwrap().values().any(|ids| ids.contains(&effect_id)) {
+        let has_effects = self
+            .signal_subscribers
+            .read()
+            .unwrap()
+            .values()
+            .any(|ids| ids.contains(&effect_id));
+
+        if !has_effects {
             self.remove_effect(effect_id);
         }
     }
@@ -335,15 +375,20 @@ impl Runtime {
         }
 
         let to_remove = {
-            let mut to_remove = self.pending_remove.write().unwrap().take().unwrap_or_default();
+            let mut pending_remove = self.pending_remove.write().unwrap().take().unwrap_or_default();
+            pending_remove.extend(
+                self.signal_subscribers
+                    .read()
+                    .unwrap()
+                    .iter()
+                    .filter(|(_, ids)| ids.is_empty())
+                    .map(|(&id, _)| id),
+            );
 
-            to_remove.extend(self.signal_subscribers.read().unwrap()
-                .iter()
-                .filter(|(_, ids)| ids.is_empty())
-                .map(|(&id, _)| id));
-
-            to_remove
+            pending_remove
+            // no-coverage:start
         };
+        // no-coverage:stop
 
         for id in to_remove {
             self.remove_signal(id);
@@ -351,12 +396,17 @@ impl Runtime {
     }
 
     pub fn create_action<I, O, F, R>(self: Arc<Self>, f: F) -> Action<I, O>
-        where O: UnwindSafe + 'static, R: Future<Output = O> + UnwindSafe + 'static, F: Fn(I) -> R + 'static {
+    where
+        O: UnwindSafe + 'static,
+        R: Future<Output = O> + UnwindSafe + 'static,
+        F: Fn(I) -> R + 'static, {
         Action::new(Arc::clone(&self), f)
     }
 
     pub fn create_memo<T, F>(self: Arc<Self>, f: F) -> Signal<T>
-        where T: PartialEq + 'static, F: Fn(Option<&T>) -> T + 'static {
+    where
+        T: PartialEq + 'static,
+        F: Fn(Option<&T>) -> T + 'static, {
         // allocate effect id
         let effect_id = EffectId::new();
 
@@ -390,8 +440,8 @@ impl Runtime {
 
                         has_diff
                     });
-                },
-            ));
+                }),
+            );
         }
 
         // cleaning after effect, like the method `create_effect` does
@@ -401,14 +451,18 @@ impl Runtime {
     }
 
     pub fn create_keyed_signal<C, V>(self: Arc<Self>, c: Signal<C>, key: &str) -> Signal<Option<V>>
-        where V: Clone + PartialEq + 'static, C: KeyedCollection<Value = V> + 'static {
+    where
+        V: Clone + PartialEq + 'static,
+        C: KeyedCollection<Value = V> + 'static, {
         let key = key.to_string();
 
         self.create_memo(move |_| c.with(|c| c.keyed_get(&key).cloned()))
     }
 
     pub fn create_keyed_str_signal<C, V>(self: Arc<Self>, c: Signal<C>, key: &str) -> Signal<Option<String>>
-        where V: ToString + 'static, C: KeyedCollection<Value = V> + 'static {
+    where
+        V: ToString + 'static,
+        C: KeyedCollection<Value = V> + 'static, {
         let key = key.to_string();
 
         self.create_memo(move |_| c.with(|c| c.keyed_get(&key).map(|v| v.to_string())))
@@ -423,29 +477,50 @@ impl Debug for Runtime {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         const SPC: &str = "  ";
 
-        let running_effect = self.running_effect.read().unwrap().map_or_else(|| String::from("-"), |id| id.id());
-        let signals = self.signal_refs.read().unwrap()
+        let running_effect = self
+            .running_effect
+            .read()
+            .unwrap()
+            .map_or_else(|| String::from("-"), |id| id.id());
+
+        let signals = self
+            .signal_refs
+            .read()
+            .unwrap()
             .iter()
             .map(|(id, ref_count)| {
-                format!("\n{SPC}{SPC}- {} (ref count: {})", id.id(), ref_count.load(Ordering::SeqCst))
+                format!(
+                    "\n{SPC}{SPC}- {} (ref count: {})",
+                    id.id(),
+                    ref_count.load(Ordering::SeqCst)
+                )
             })
             .collect::<String>();
 
-        let effects = self.effects.read()
+        let effects = self
+            .effects
+            .read()
             .unwrap()
             .iter()
             .map(|(id, _)| format!("\n{SPC}{SPC}- {}", id.id()))
             .collect::<String>();
 
-        let links = self.signal_links.read().unwrap()
+        let links = self
+            .signal_links
+            .read()
+            .unwrap()
             .iter()
             .map(|(dest, src)| format!("\n{SPC}{SPC}- {} -> {}", dest.id(), src.id()))
             .collect::<String>();
 
-        let subscribers = self.signal_subscribers.read().unwrap()
+        let subscribers = self
+            .signal_subscribers
+            .read()
+            .unwrap()
             .iter()
             .map(|(signal_id, effect_ids)| {
-                let effect_ids = effect_ids.iter()
+                let effect_ids = effect_ids
+                    .iter()
                     .map(|id| format!("{SPC}{SPC}{SPC}> {}", id.id()))
                     .collect::<Vec<_>>();
 
@@ -476,12 +551,32 @@ mod tests {
     fn test_runtime_new() {
         let rt = create_runtime();
 
-        assert_eq!(rt.signal_values.read().unwrap().len(), 0, "signal values should be empty");
+        assert_eq!(
+            rt.signal_values.read().unwrap().len(),
+            0,
+            "signal values should be empty"
+        );
+
         assert_eq!(rt.signal_refs.read().unwrap().len(), 0, "signal refs should be empty");
-        assert_eq!(rt.running_effect.read().unwrap().clone(), None, "running effect should be empty");
+        assert_eq!(
+            rt.running_effect.read().unwrap().clone(),
+            None,
+            "running effect should be empty"
+        );
+
         assert_eq!(rt.signal_links.read().unwrap().len(), 0, "signal links should be empty");
-        assert_eq!(rt.reverse_links.read().unwrap().len(), 0, "reverse links should be empty");
-        assert_eq!(rt.signal_subscribers.read().unwrap().len(), 0, "signal subscribers should be empty");
+        assert_eq!(
+            rt.reverse_links.read().unwrap().len(),
+            0,
+            "reverse links should be empty"
+        );
+
+        assert_eq!(
+            rt.signal_subscribers.read().unwrap().len(),
+            0,
+            "signal subscribers should be empty"
+        );
+
         assert_eq!(rt.effects.read().unwrap().len(), 0, "effects should be empty");
     }
 
@@ -499,7 +594,11 @@ mod tests {
             panic!("signal ref should be found after incrementing");
         }
 
-        assert_eq!(sig_ref.unwrap().load(Ordering::SeqCst), 1, "signal refs should be incremented");
+        assert_eq!(
+            sig_ref.unwrap().load(Ordering::SeqCst),
+            1,
+            "signal refs should be incremented"
+        );
     }
 
     #[test]
@@ -537,14 +636,32 @@ mod tests {
 
         rt.signal_subscribers.write().unwrap().insert(id, HashSet::new());
         rt.signal_links.write().unwrap().insert(id, link_id);
-        rt.reverse_links.write().unwrap().insert(link_id, vec![id].into_iter().collect::<HashSet<_>>());
+        rt.reverse_links
+            .write()
+            .unwrap()
+            .insert(link_id, vec![id].into_iter().collect::<HashSet<_>>());
 
         rt.clean_signal(id);
 
-        assert!(!rt.signal_refs.read().unwrap().contains_key(&id), "signal ref should be removed");
-        assert!(!rt.signal_subscribers.read().unwrap().contains_key(&id), "signal subscriber should be removed");
-        assert!(!rt.signal_links.read().unwrap().contains_key(&id), "signal link should be removed");
-        assert!(!rt.reverse_links.read().unwrap().contains_key(&link_id), "reverse link should be removed");
+        assert!(
+            !rt.signal_refs.read().unwrap().contains_key(&id),
+            "signal ref should be removed"
+        );
+
+        assert!(
+            !rt.signal_subscribers.read().unwrap().contains_key(&id),
+            "signal subscriber should be removed"
+        );
+
+        assert!(
+            !rt.signal_links.read().unwrap().contains_key(&id),
+            "signal link should be removed"
+        );
+
+        assert!(
+            !rt.reverse_links.read().unwrap().contains_key(&link_id),
+            "reverse link should be removed"
+        );
     }
 
     fn _check_signal_ref_count(rt: &Runtime, id: SignalId) {
@@ -596,7 +713,10 @@ mod tests {
 
             let fetched_value = typed_value.unwrap();
 
-            assert_eq!(fetched_value, &v, "signal value should be equal to the initial value for {kind} signal");
+            assert_eq!(
+                fetched_value, &v,
+                "signal value should be equal to the initial value for {kind} signal"
+            );
         }
 
         {
@@ -622,7 +742,11 @@ mod tests {
         let signal = Arc::clone(&rt).create_signal(42);
         let link = signal.create_link();
 
-        assert_eq!(link.get(), 42, "signal value should be equal to the initial value for linked signal");
+        assert_eq!(
+            link.get(),
+            42,
+            "signal value should be equal to the initial value for linked signal"
+        );
 
         let id = signal.id();
         let link_id = link.id();
@@ -654,8 +778,15 @@ mod tests {
 
         himself.link_to(&signal);
 
-        assert!(rt.signal_links.read().unwrap().is_empty(), "signal link should not be created");
-        assert!(rt.reverse_links.read().unwrap().is_empty(), "reverse link should not be created");
+        assert!(
+            rt.signal_links.read().unwrap().is_empty(),
+            "signal link should not be created"
+        );
+
+        assert!(
+            rt.reverse_links.read().unwrap().is_empty(),
+            "reverse link should not be created"
+        );
     }
 
     #[test]
@@ -673,7 +804,11 @@ mod tests {
 
         dest_signal.link_to(&src_signal);
 
-        assert_eq!(dest_signal.get(), 43, "signal value should be equal to the linked signal value");
+        assert_eq!(
+            dest_signal.get(),
+            43,
+            "signal value should be equal to the linked signal value"
+        );
 
         let links = rt.signal_links.read().unwrap();
         let reverse = rt.reverse_links.read().unwrap();
@@ -714,8 +849,17 @@ mod tests {
         let after = "after linking dest to a linked signal";
 
         println!("Link: {link_id}");
-        assert_eq!(rt.signal_links.read().unwrap().len(), 1, "first signal link should be created {before}");
-        assert_eq!(rt.reverse_links.read().unwrap().len(), 1, "first reverse link should be created {before}");
+        assert_eq!(
+            rt.signal_links.read().unwrap().len(),
+            1,
+            "first signal link should be created {before}"
+        );
+
+        assert_eq!(
+            rt.reverse_links.read().unwrap().len(),
+            1,
+            "first reverse link should be created {before}"
+        );
 
         assert_eq!(
             rt.signal_links.read().unwrap().get(&link_id),
@@ -733,14 +877,13 @@ mod tests {
         dest_signal.link_to(&link_signal);
 
         // now, there are 2 signal links which refer to the same signal, the source signal
-        let signal_links = vec![
-            (link_id, src_id),
-            (dest_id, src_id),
-        ].into_iter().collect::<HashMap<_, _>>();
+        let signal_links = vec![(link_id, src_id), (dest_id, src_id)]
+            .into_iter()
+            .collect::<HashMap<_, _>>();
 
-        let reverse_links = vec![
-            (src_id, vec![dest_id, link_id].into_iter().collect::<HashSet<_>>()),
-        ].into_iter().collect::<HashMap<_, HashSet<_>>>();
+        let reverse_links = vec![(src_id, vec![dest_id, link_id].into_iter().collect::<HashSet<_>>())]
+            .into_iter()
+            .collect::<HashMap<_, HashSet<_>>>();
 
         assert_eq!(
             rt.signal_links.read().unwrap().clone(),
@@ -828,7 +971,11 @@ mod tests {
         }
         assert_eq!(count.load(Ordering::SeqCst), 42, "effect should be run immediately");
 
-        assert_eq!(rt.effects.read().unwrap().len(), 0, "effect should be removed after running");
+        assert_eq!(
+            rt.effects.read().unwrap().len(),
+            0,
+            "effect should be removed after running"
+        );
     }
 
     #[test]
@@ -846,7 +993,11 @@ mod tests {
                     panic!("signal ref should be found after creating effect");
                 }
 
-                assert_eq!(list_refs.unwrap().load(Ordering::SeqCst), 1, "signal ref count should be incremented");
+                assert_eq!(
+                    list_refs.unwrap().load(Ordering::SeqCst),
+                    1,
+                    "signal ref count should be incremented"
+                );
             }
 
             assert_eq!(count.load(Ordering::SeqCst), 0, "effect should not be run immediately");
@@ -891,7 +1042,12 @@ mod tests {
         );
 
         assert_eq!(
-            rt.signal_refs.read().unwrap().get(&sig_id).unwrap().load(Ordering::SeqCst),
+            rt.signal_refs
+                .read()
+                .unwrap()
+                .get(&sig_id)
+                .unwrap()
+                .load(Ordering::SeqCst),
             2,
             "signal ref count should not be decremented before registration",
         );
@@ -907,7 +1063,6 @@ mod tests {
             Some(&effects),
             "effect should be added to the subscribers after registration",
         );
-
     }
 
     #[test]
@@ -919,10 +1074,18 @@ mod tests {
 
         {
             let count = Arc::clone(&count);
-            rt.effects.write().unwrap().insert(eff_id, Arc::new(move || { count.fetch_add(10, Ordering::SeqCst); }));
+            rt.effects.write().unwrap().insert(
+                eff_id,
+                Arc::new(move || {
+                    count.fetch_add(10, Ordering::SeqCst);
+                }),
+            );
         }
 
-        rt.signal_subscribers.write().unwrap().insert(sig_id, vec![eff_id].into_iter().collect::<HashSet<_>>());
+        rt.signal_subscribers
+            .write()
+            .unwrap()
+            .insert(sig_id, vec![eff_id].into_iter().collect::<HashSet<_>>());
         rt.notify_subscribers(sig_id);
         assert_eq!(
             count.load(Ordering::SeqCst),
@@ -947,11 +1110,19 @@ mod tests {
         let eff_id = EffectId::new();
         let count = Arc::new(AtomicUsize::new(32));
 
-        rt.signal_subscribers.write().unwrap().insert(sig_id, vec![eff_id].into_iter().collect::<HashSet<_>>());
+        rt.signal_subscribers
+            .write()
+            .unwrap()
+            .insert(sig_id, vec![eff_id].into_iter().collect::<HashSet<_>>());
 
         {
             let count = Arc::clone(&count);
-            rt.effects.write().unwrap().insert(eff_id, Arc::new(move || { count.fetch_add(10, Ordering::SeqCst); }));
+            rt.effects.write().unwrap().insert(
+                eff_id,
+                Arc::new(move || {
+                    count.fetch_add(10, Ordering::SeqCst);
+                }),
+            );
         }
 
         rt.run_effect(eff_id);
@@ -994,7 +1165,11 @@ mod tests {
         let key = {
             let values = rt.signal_values.read().unwrap();
 
-            assert_eq!(values.len(), 1, "signal value should be redirected after removing links");
+            assert_eq!(
+                values.len(),
+                1,
+                "signal value should be redirected after removing links"
+            );
             values.keys().next().copied().unwrap()
         };
 
@@ -1014,12 +1189,22 @@ mod tests {
         let link_id = SignalId::new();
 
         rt.signal_links.write().unwrap().insert(sig_id, link_id);
-        rt.reverse_links.write().unwrap().insert(link_id, vec![sig_id].into_iter().collect::<HashSet<_>>());
+        rt.reverse_links
+            .write()
+            .unwrap()
+            .insert(link_id, vec![sig_id].into_iter().collect::<HashSet<_>>());
 
         rt.remove_reverse_links(sig_id, link_id);
 
-        assert!(rt.signal_links.read().unwrap().is_empty(), "signal link should be removed");
-        assert!(rt.reverse_links.read().unwrap().is_empty(), "reverse link should be removed");
+        assert!(
+            rt.signal_links.read().unwrap().is_empty(),
+            "signal link should be removed"
+        );
+
+        assert!(
+            rt.reverse_links.read().unwrap().is_empty(),
+            "reverse link should be removed"
+        );
     }
 
     #[test]
@@ -1034,18 +1219,49 @@ mod tests {
         rt.signal_refs.write().unwrap().insert(sig_id, AtomicUsize::new(2));
         rt.signal_values.write().unwrap().insert(sig_id, value);
         rt.signal_links.write().unwrap().insert(sig_id, link_id);
-        rt.reverse_links.write().unwrap().insert(sig_id, vec![reverse_id].into_iter().collect::<HashSet<_>>());
-        rt.signal_subscribers.write().unwrap().insert(sig_id, vec![effect_id].into_iter().collect::<HashSet<_>>());
+        rt.reverse_links
+            .write()
+            .unwrap()
+            .insert(sig_id, vec![reverse_id].into_iter().collect::<HashSet<_>>());
+
+        rt.signal_subscribers
+            .write()
+            .unwrap()
+            .insert(sig_id, vec![effect_id].into_iter().collect::<HashSet<_>>());
+
         rt.effects.write().unwrap().insert(effect_id, Arc::new(|| {}));
 
         rt.remove_signal(sig_id);
 
-        assert!(!rt.signal_refs.read().unwrap().contains_key(&sig_id), "signal ref should be removed");
-        assert!(!rt.signal_values.read().unwrap().contains_key(&sig_id), "old signal value should be moved");
-        assert!(!rt.signal_links.read().unwrap().contains_key(&sig_id), "signal link should be removed");
-        assert!(!rt.reverse_links.read().unwrap().contains_key(&link_id), "reverse link should be removed");
-        assert!(!rt.signal_subscribers.read().unwrap().contains_key(&sig_id), "signal subscriber should be removed");
-        assert!(!rt.effects.read().unwrap().contains_key(&effect_id), "effect should be removed");
+        assert!(
+            !rt.signal_refs.read().unwrap().contains_key(&sig_id),
+            "signal ref should be removed"
+        );
+
+        assert!(
+            !rt.signal_values.read().unwrap().contains_key(&sig_id),
+            "old signal value should be moved"
+        );
+
+        assert!(
+            !rt.signal_links.read().unwrap().contains_key(&sig_id),
+            "signal link should be removed"
+        );
+
+        assert!(
+            !rt.reverse_links.read().unwrap().contains_key(&link_id),
+            "reverse link should be removed"
+        );
+
+        assert!(
+            !rt.signal_subscribers.read().unwrap().contains_key(&sig_id),
+            "signal subscriber should be removed"
+        );
+
+        assert!(
+            !rt.effects.read().unwrap().contains_key(&effect_id),
+            "effect should be removed"
+        );
 
         assert!(
             rt.signal_values.read().unwrap().contains_key(&reverse_id),
@@ -1061,13 +1277,27 @@ mod tests {
 
         rt.effects.write().unwrap().insert(effect_id, Arc::new(|| {}));
         rt.signal_refs.write().unwrap().insert(sig_id, AtomicUsize::new(2));
-        rt.signal_subscribers.write().unwrap().insert(sig_id, vec![effect_id].into_iter().collect::<HashSet<_>>());
+        rt.signal_subscribers
+            .write()
+            .unwrap()
+            .insert(sig_id, vec![effect_id].into_iter().collect::<HashSet<_>>());
 
         rt.remove_effect(effect_id);
 
-        assert!(!rt.effects.read().unwrap().contains_key(&effect_id), "effect should be found before removing");
-        assert!(!rt.signal_refs.read().unwrap().contains_key(&sig_id), "signal ref should be removed");
-        assert!(!rt.signal_subscribers.read().unwrap().contains_key(&sig_id), "signal subscriber should be removed");
+        assert!(
+            !rt.effects.read().unwrap().contains_key(&effect_id),
+            "effect should be found before removing"
+        );
+
+        assert!(
+            !rt.signal_refs.read().unwrap().contains_key(&sig_id),
+            "signal ref should be removed"
+        );
+
+        assert!(
+            !rt.signal_subscribers.read().unwrap().contains_key(&sig_id),
+            "signal subscriber should be removed"
+        );
     }
 
     #[test]
@@ -1135,11 +1365,25 @@ mod tests {
         }
 
         assert_eq!(memo.get(), 42, "memo value should be equal to the initial value");
-        assert_eq!(call_count.load(Ordering::SeqCst), 1, "memo should be called once after creating");
-        assert_eq!(update_count.load(Ordering::SeqCst), 1, "memo should be called once after creating");
+        assert_eq!(
+            call_count.load(Ordering::SeqCst),
+            1,
+            "memo should be called once after creating"
+        );
+
+        assert_eq!(
+            update_count.load(Ordering::SeqCst),
+            1,
+            "memo should be called once after creating"
+        );
 
         signal.set(42);
-        assert_eq!(call_count.load(Ordering::SeqCst), 2, "memo should be called once after updating the signal");
+        assert_eq!(
+            call_count.load(Ordering::SeqCst),
+            2,
+            "memo should be called once after updating the signal"
+        );
+
         assert_eq!(
             update_count.load(Ordering::SeqCst),
             1,
@@ -1147,8 +1391,17 @@ mod tests {
         );
 
         signal.set(123);
-        assert_eq!(call_count.load(Ordering::SeqCst), 3, "memo should be called once after updating the signal");
-        assert_eq!(update_count.load(Ordering::SeqCst), 2, "memo should be called hen the value is changed");
+        assert_eq!(
+            call_count.load(Ordering::SeqCst),
+            3,
+            "memo should be called once after updating the signal"
+        );
+
+        assert_eq!(
+            update_count.load(Ordering::SeqCst),
+            2,
+            "memo should be called hen the value is changed"
+        );
     }
 }
 // no-coverage:stop

@@ -6,7 +6,7 @@ pub struct FuturesSpawner {}
 
 impl FuturesSpawner {
     pub fn new() -> Self {
-        FuturesSpawner{}
+        FuturesSpawner {}
     }
 }
 
@@ -20,7 +20,10 @@ impl SpawnGenerator for FuturesSpawner {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::{atomic::{AtomicUsize, Ordering}, Arc};
+    use std::sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc,
+    };
 
     #[tokio::test]
     async fn test_spawn() {

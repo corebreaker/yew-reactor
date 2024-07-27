@@ -60,4 +60,3 @@ mod tests {
     }
 }
 // no-coverage:stop
-

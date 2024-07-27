@@ -1,17 +1,21 @@
 use super::{message::Message, properties::ValueProps};
-use crate::{signal::{Runtime, Signal}, css::CssClasses};
+use crate::{
+    signal::{Runtime, Signal},
+    css::CssClasses,
+};
+
 use yew::{Component, Context, Html, html};
 use std::{marker::PhantomData, sync::Arc};
 
 pub(super) struct ValueState<P: ValueProps + 'static, C: Component<Properties = P, Message = Message>> {
     element: String,
-    value: Option<String>,
-    class: String,
+    value:   Option<String>,
+    class:   String,
 
-    classes: CssClasses,
+    classes:      CssClasses,
     class_signal: Signal<String>,
 
-    default_classes: CssClasses,
+    default_classes:      CssClasses,
     default_class_signal: Signal<String>,
 
     p: PhantomData<P>,
@@ -25,7 +29,7 @@ impl<P: ValueProps + 'static, C: Component<Properties = P, Message = Message>> V
         let class_signal = Arc::clone(&rt).create_signal(String::new());
         let prop_signal = Arc::clone(&rt).create_signal(String::new());
         let classes = Arc::clone(&rt).create_css_classes();
-        let default_classes= Arc::clone(&rt).create_css_classes();
+        let default_classes = Arc::clone(&rt).create_css_classes();
         let default_class_signal = Arc::clone(&rt).create_signal(String::new());
 
         if let Some(prop_classes) = props.classes().cloned() {
@@ -89,8 +93,12 @@ impl<P: ValueProps + 'static, C: Component<Properties = P, Message = Message>> V
             let classes = props.classes().cloned();
             if classes.as_ref() != old_props.classes() {
                 match classes {
-                    Some(classes) => { self.classes.link_to(&classes); }
-                    None => { self.classes.link_to(&self.default_classes); }
+                    Some(classes) => {
+                        self.classes.link_to(&classes);
+                    }
+                    None => {
+                        self.classes.link_to(&self.default_classes);
+                    }
                 }
             }
         }
@@ -99,8 +107,12 @@ impl<P: ValueProps + 'static, C: Component<Properties = P, Message = Message>> V
             let class_signal = props.class_signal();
             if class_signal != old_props.class_signal() {
                 match class_signal {
-                    Some(class_signal) => { self.class_signal.link_to(class_signal); }
-                    None => { self.class_signal.link_to(&self.default_class_signal); }
+                    Some(class_signal) => {
+                        self.class_signal.link_to(class_signal);
+                    }
+                    None => {
+                        self.class_signal.link_to(&self.default_class_signal);
+                    }
                 }
             }
         }

@@ -1,4 +1,8 @@
-use std::{fmt::{Debug, Formatter, Result as FmtResult}, sync::Arc, any::Any};
+use std::{
+    fmt::{Debug, Formatter, Result as FmtResult},
+    sync::Arc,
+    any::Any,
+};
 
 #[derive(Clone)]
 pub(super) struct Function(Arc<dyn Fn(Option<&String>) -> String>);

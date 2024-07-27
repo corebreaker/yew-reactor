@@ -7,10 +7,10 @@ use std::{
 };
 
 pub struct Signal<T: 'static> {
-    runtime: Arc<Runtime>,
-    id: SignalId,
+    runtime:    Arc<Runtime>,
+    id:         SignalId,
     registered: AtomicBool,
-    ty: PhantomData<T>,
+    ty:         PhantomData<T>,
 }
 
 impl<T: 'static> Signal<T> {
@@ -22,7 +22,9 @@ impl<T: 'static> Signal<T> {
             id,
             registered: AtomicBool::new(false),
             ty: PhantomData,
+            // no-coverage:start
         }
+        // no-coverage:stop
     }
 
     pub fn runtime(&self) -> Arc<Runtime> {
@@ -222,7 +224,11 @@ mod tests {
         let rt = create_runtime();
         let signal = Arc::clone(&rt).create_signal(21);
 
-        assert_eq!(signal.with(|v| *v * 2), 42, "signal value should be equal to the initial value");
+        assert_eq!(
+            signal.with(|v| *v * 2),
+            42,
+            "signal value should be equal to the initial value"
+        );
     }
 
     #[test]
@@ -256,8 +262,17 @@ mod tests {
         let signal2 = Arc::clone(&rt).create_signal(0);
         signal.link_to(&signal2);
         signal2.set(6);
-        assert_eq!(signal2.get(), 6, "signal value should be equal to the linked signal value with linked getter");
-        assert_eq!(signal.get(), 6, "signal value should be equal to the linked signal value with direct getter");
+        assert_eq!(
+            signal2.get(),
+            6,
+            "signal value should be equal to the linked signal value with linked getter"
+        );
+
+        assert_eq!(
+            signal.get(),
+            6,
+            "signal value should be equal to the linked signal value with direct getter"
+        );
 
         let signal3 = signal.create_link();
         signal3.set(7);
@@ -291,17 +306,46 @@ mod tests {
             });
         }
 
-        assert_eq!(call_count.load(Ordering::SeqCst), 1, "the effect should be called once for initial value");
+        assert_eq!(
+            call_count.load(Ordering::SeqCst),
+            1,
+            "the effect should be called once for initial value"
+        );
+
         assert_eq!(value.load(Ordering::SeqCst), 42, "the initial value should be stored");
 
         signal.untracked_update(|v| *v = 123);
-        assert_eq!(signal.get(), 123, "signal value should be equal to the untracked updated value");
-        assert_eq!(call_count.load(Ordering::SeqCst), 1, "the effect should not be called for untracked update");
-        assert_eq!(value.load(Ordering::SeqCst), 42, "the stored value should not be changed");
+        assert_eq!(
+            signal.get(),
+            123,
+            "signal value should be equal to the untracked updated value"
+        );
+
+        assert_eq!(
+            call_count.load(Ordering::SeqCst),
+            1,
+            "the effect should not be called for untracked update"
+        );
+
+        assert_eq!(
+            value.load(Ordering::SeqCst),
+            42,
+            "the stored value should not be changed"
+        );
 
         signal.update(|v| *v = 0);
-        assert_eq!(signal.get(), 0, "signal value should be equal to the untracked updated value");
-        assert_eq!(call_count.load(Ordering::SeqCst), 2, "the effect should be called for untracked update");
+        assert_eq!(
+            signal.get(),
+            0,
+            "signal value should be equal to the untracked updated value"
+        );
+
+        assert_eq!(
+            call_count.load(Ordering::SeqCst),
+            2,
+            "the effect should be called for untracked update"
+        );
+
         assert_eq!(value.load(Ordering::SeqCst), 0, "the stored value should be changed");
     }
 
@@ -323,7 +367,12 @@ mod tests {
             });
         }
 
-        assert_eq!(call_count.load(Ordering::SeqCst), 1, "the effect should be called once for initial value");
+        assert_eq!(
+            call_count.load(Ordering::SeqCst),
+            1,
+            "the effect should be called once for initial value"
+        );
+
         assert_eq!(value.load(Ordering::SeqCst), 42, "the initial value should be stored");
 
         signal.update_if(|v| {
@@ -332,8 +381,17 @@ mod tests {
         });
 
         assert_eq!(signal.get(), 123, "signal value should be equal to the updated value");
-        assert_eq!(call_count.load(Ordering::SeqCst), 1, "the effect should not be called for false condition");
-        assert_eq!(value.load(Ordering::SeqCst), 42, "the stored value should not be changed");
+        assert_eq!(
+            call_count.load(Ordering::SeqCst),
+            1,
+            "the effect should not be called for false condition"
+        );
+
+        assert_eq!(
+            value.load(Ordering::SeqCst),
+            42,
+            "the stored value should not be changed"
+        );
 
         signal.update_if(|v| {
             *v = 321;
@@ -341,7 +399,12 @@ mod tests {
         });
 
         assert_eq!(signal.get(), 321, "signal value should be equal to the updated value");
-        assert_eq!(call_count.load(Ordering::SeqCst), 2, "the effect should be called for true condition");
+        assert_eq!(
+            call_count.load(Ordering::SeqCst),
+            2,
+            "the effect should be called for true condition"
+        );
+
         assert_eq!(value.load(Ordering::SeqCst), 321, "the stored value should be changed");
     }
 }
