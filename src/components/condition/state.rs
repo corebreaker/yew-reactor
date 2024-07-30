@@ -8,8 +8,8 @@ pub enum Message {
 
 #[derive(Properties)]
 pub struct Props<T: AsBool + 'static> {
-    pub when:     Signal<T>,
-    pub children: Html,
+    pub(crate) when:     Signal<T>,
+    pub(crate) children: Html,
 }
 
 impl<T: AsBool + 'static> PartialEq for Props<T> {
@@ -22,15 +22,18 @@ impl<T: AsBool + 'static> Eq for Props<T> {}
 
 pub struct ConditionState<T: AsBool + 'static, C: Component<Message = Message, Properties = Props<T>>> {
     condition: bool,
+    signal:    Signal<T>,
     ty:        PhantomData<T>,
     c:         PhantomData<C>,
 }
 
 impl<T: AsBool, C: Component<Message = Message, Properties = Props<T>>> ConditionState<T, C> {
     pub(super) fn create(ctx: &Context<C>) -> Self {
+        let signal = ctx.props().when.clone();
+
         {
             let scope = ctx.link().clone();
-            let condition = ctx.props().when.clone();
+            let condition = signal.clone();
 
             condition.runtime().create_effect(move || {
                 let value = condition.with(AsBool::as_bool);
@@ -41,8 +44,9 @@ impl<T: AsBool, C: Component<Message = Message, Properties = Props<T>>> Conditio
 
         Self {
             condition: false,
-            ty:        PhantomData,
-            c:         PhantomData,
+            signal,
+            ty: PhantomData,
+            c: PhantomData,
         }
     }
 
@@ -59,9 +63,9 @@ impl<T: AsBool, C: Component<Message = Message, Properties = Props<T>>> Conditio
         }
     }
 
-    pub(super) fn changed(&mut self, ctx: &Context<C>, old_props: &Props<T>) -> bool {
-        if ctx.props().when != old_props.when {
-            ctx.props().when.link_to(&old_props.when);
+    pub(super) fn changed(&mut self, ctx: &Context<C>, _old_props: &Props<T>) -> bool {
+        if ctx.props().when != self.signal {
+            ctx.props().when.link_to(&self.signal);
         }
 
         false

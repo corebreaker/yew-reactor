@@ -33,7 +33,7 @@ impl<P: ValueProps + 'static, C: Component<Properties = P, Message = Message>> V
         let default_class_signal = Arc::clone(&rt).create_signal(String::new());
 
         if let Some(prop_classes) = props.classes().cloned() {
-            classes.link_to(&prop_classes);
+            prop_classes.link_to(&classes);
         }
 
         if let Some(prop_class_signal) = props.class_signal() {
