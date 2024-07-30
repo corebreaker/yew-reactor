@@ -9,8 +9,8 @@ pub enum Msg {
 
 #[derive(Properties)]
 pub struct Props<C: KeyedCollection> {
-    pub values:   Signal<C>,
-    pub children: Children,
+    pub(crate) values:   Signal<C>,
+    pub(crate) children: Children,
 }
 
 impl<C: KeyedCollection> PartialEq for Props<C> {
@@ -27,7 +27,7 @@ pub struct For<T: Clone + PartialEq + Default + 'static, C: KeyedCollection> {
     c:      PhantomData<C>,
 }
 
-impl<T: Clone + PartialEq + Default + 'static, C: KeyedCollection<Value = T>> For<T, C> {
+impl<T: Default + Clone + PartialEq + 'static, C: KeyedCollection<Value = T>> For<T, C> {
     fn make_item(children: &Children, values: Signal<C>, key: &str) -> Html {
         let value = values.runtime().create_keyed_signal(values, key);
         let key = key.to_string();
@@ -50,7 +50,7 @@ impl<T: Clone + PartialEq + Default + 'static, C: KeyedCollection<Value = T>> Fo
     }
 }
 
-impl<T: Clone + PartialEq + Default + 'static, C: KeyedCollection<Value = T>> Component for For<T, C> {
+impl<T: Default + Clone + PartialEq + 'static, C: KeyedCollection<Value = T>> Component for For<T, C> {
     type Message = Msg;
     type Properties = Props<C>;
 

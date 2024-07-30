@@ -5,19 +5,19 @@ use std::marker::PhantomData;
 
 #[derive(Properties)]
 pub struct Props<T: ToString + 'static> {
-    pub signal: Signal<T>,
+    pub(crate) signal: Signal<T>,
 
     #[prop_or_default]
-    pub class: Option<AttrValue>,
+    pub(crate) class: Option<AttrValue>,
 
     #[prop_or_default]
-    pub class_signal: Option<Signal<String>>,
+    pub(crate) class_signal: Option<Signal<String>>,
 
     #[prop_or_default]
-    pub classes: Option<CssClasses>,
+    pub(crate) classes: Option<CssClasses>,
 
     #[prop_or_default]
-    pub element: Option<AttrValue>,
+    pub(crate) element: Option<AttrValue>,
 }
 
 impl<T: ToString + 'static> ValueProps for Props<T> {

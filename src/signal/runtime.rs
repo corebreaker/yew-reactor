@@ -11,6 +11,7 @@ use crate::{
     css::CssClasses,
 };
 
+use uuid::Uuid;
 use std::{
     sync::atomic::{AtomicUsize, Ordering},
     collections::{HashMap, HashSet},
@@ -26,6 +27,7 @@ type EffectFn = Arc<dyn Fn()>;
 
 #[derive(Default)]
 pub struct Runtime {
+    id:                 Uuid,
     spawner:            Spawner,
     defer_manager:      DeferManager,
     signal_values:      RwLock<HashMap<SignalId, SignalValue>>,
@@ -55,6 +57,10 @@ impl Runtime {
 
     pub fn spawner(&self) -> &Spawner {
         &self.spawner
+    }
+
+    pub fn defer_manager(&self) -> &DeferManager {
+        &self.defer_manager
     }
 
     pub(crate) fn spawn<F: Future<Output = ()> + Send + UnwindSafe + 'static>(&self, f: F) {
@@ -159,7 +165,10 @@ impl Runtime {
 
         // remove old dependencies
         if self.signal_values.read().unwrap().contains_key(&dest) {
-            self.remove_signal_dependencies(dest);
+            if let Some(value) = self.remove_signal_dependencies(dest) {
+                self.signal_values.write().unwrap().insert(src, value);
+                self.notify_subscribers(src);
+            }
         }
 
         // add link
@@ -278,7 +287,7 @@ impl Runtime {
         }
     }
 
-    fn remove_value_links(&self, signal_id: SignalId, value: SignalValue) {
+    fn remove_value_links(&self, signal_id: SignalId, value: SignalValue) -> Option<SignalValue> {
         let linked_signals = self.reverse_links.write().unwrap().remove(&signal_id);
 
         if let Some(mut linked_signals) = linked_signals {
@@ -299,7 +308,11 @@ impl Runtime {
             if !linked_signals.is_empty() {
                 self.reverse_links.write().unwrap().insert(new_id, linked_signals);
             }
+
+            return None;
         }
+
+        Some(value)
     }
 
     fn remove_reverse_links(&self, signal_id: SignalId, link_id: SignalId) {
@@ -342,13 +355,15 @@ impl Runtime {
         }
     }
 
-    fn remove_signal_dependencies(&self, signal_id: SignalId) {
+    fn remove_signal_dependencies(&self, signal_id: SignalId) -> Option<SignalValue> {
+        let mut returned_value = None;
+
         // remove signal value
         {
             let removed_value = self.signal_values.write().unwrap().remove(&signal_id);
 
             if let Some(value) = removed_value {
-                self.remove_value_links(signal_id, value);
+                returned_value = self.remove_value_links(signal_id, value);
             }
         }
 
@@ -360,6 +375,8 @@ impl Runtime {
                 self.remove_reverse_links(signal_id, link_id);
             }
         }
+
+        returned_value
     }
 
     fn remove_effect(&self, effect_id: EffectId) {
@@ -473,10 +490,19 @@ impl Runtime {
     }
 }
 
+impl Eq for Runtime {}
+
+impl PartialEq for Runtime {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+
 impl Debug for Runtime {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         const SPC: &str = "  ";
 
+        let id = &self.id;
         let running_effect = self
             .running_effect
             .read()
@@ -531,6 +557,7 @@ impl Debug for Runtime {
         write!(
             f,
             "Runtime:\n\
+                {SPC}* ID: {id}\n\
                 {SPC}* Running effect: {running_effect}\n\
                 {SPC}* Signals:{signals}\n\
                 {SPC}* Effects:{effects}\n\
@@ -806,7 +833,7 @@ mod tests {
 
         assert_eq!(
             dest_signal.get(),
-            43,
+            42,
             "signal value should be equal to the linked signal value"
         );
 

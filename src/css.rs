@@ -293,9 +293,13 @@ mod tests {
 
         assert_eq!(
             src.sorted_values(),
-            "class1 class2 class3",
-            "the CSS classes should be linked from the source"
+            "",
+            "the CSS classes should be linked from the source and the source values should take the destination values"
         );
+
+        src.add("class1");
+        src.add("class2");
+        src.add("class3");
 
         assert_eq!(
             dest.sorted_values(),

@@ -5,9 +5,7 @@ use std::{
     pin::Pin,
     future::Future,
     panic::UnwindSafe,
-    any::Any,
 };
-use std::fmt::Display;
 
 pub type FutureVoid = LocalFuture<()>;
 
@@ -59,6 +57,7 @@ mod tests {
     use super::*;
     use std::{
         panic::panic_any,
+        any::Any,
         sync::{
             atomic::{AtomicUsize, Ordering},
             Arc,
