@@ -1,20 +1,24 @@
-[package]
-name = "yew-reactor"
+[workspace]
+members = [
+    "packages/*",
+    "examples/*",
+]
+
+default-members = [
+    "packages/*",
+]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2021"
+authors = ["Frédéric Meyer <frederic.meyer.77@gmail.com>"]
+description = "Provide reactive helping elements for Yew"
+license = "MIT"
+documentation = "https://docs.rs/yew-reactor"
+repository = "https://github.com/corebreaker/yew-reactor"
+readme = "README.md"
+keywords = ["yew", "reactive", "web", "helper", "component"]
+categories = ["wasm", "web-programming"]
 
-[[test]]
-name = "cucumber"
-harness = false
-
-[dependencies]
-backtrace = "0.3.73"
-itertools = "0.13.0"
-futures = "0.3.30"
-uuid = { version = "1.8", features = ["atomic", "v4", "v7", "serde"] }
-yew = { version = "0.21", features = ["csr"] }
-tokio = { version = "1.38.0", features = ["full"] }
-
-[dev-dependencies]
-cucumber = "0.21.1"
-cucumber-trellis = { version = "0.1.4", features = ["macro"] }
+[workspace.dependencies]
+yew = { version = "0.21.0", features = ["csr"] }

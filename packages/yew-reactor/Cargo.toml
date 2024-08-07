@@ -1,0 +1,28 @@
+[package]
+name = "yew-reactor"
+version.workspace = true
+authors.workspace = true
+description.workspace = true
+documentation.workspace = true
+repository.workspace = true
+license.workspace = true
+edition.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "../../README.md"
+
+[[test]]
+name = "cucumber"
+harness = false
+
+[dependencies]
+backtrace = "0.3.73"
+itertools = "0.13.0"
+futures = "0.3.30"
+uuid = { version = "1.10.0", features = ["atomic", "v4", "v7", "serde"] }
+tokio = { version = "1.39.2", features = ["full"] }
+yew = { workspace = true }
+
+[dev-dependencies]
+cucumber = "0.21.1"
+cucumber-trellis = { version = "0.1.4", features = ["macro"] }
