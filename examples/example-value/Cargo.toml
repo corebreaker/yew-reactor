@@ -1,6 +1,9 @@
 [package]
 name = "example-value"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
+yew = { workspace = true }
+gloo-console = { workspace = true }
+yew-reactor = { path = "../../packages/yew-reactor", package = "yew-reactor" }
