@@ -8,9 +8,7 @@ struct ValProps {
 }
 
 #[derive(Clone, Default, PartialEq)]
-struct Value {
-
-}
+struct Value {}
 
 impl Component for Value {
     type Message = ();
@@ -33,12 +31,15 @@ impl Component for Value {
     fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
         let id = ctx.type_id();
 
-        console::log!(format!("Changed Value {id:?}: {}", old_props.children != ctx.props().children));
+        console::log!(format!(
+            "Changed Value {id:?}: {}",
+            old_props.children != ctx.props().children
+        ));
         old_props.children != ctx.props().children
     }
 
     fn view(&self, ctx: &Context<Self>) -> Html {
-        html!{
+        html! {
             <div style="padding: 5px">
                 <p>{ "See Value" }</p>
                 <p>{ ctx.props().children.clone() }</p>

@@ -8,10 +8,10 @@ jobs:
       - checkout
       - run:
           name: Show Env
-          command: "/bin/sh -c set"
+          command: /bin/sh -c set
       - run:
           name: Check formatting
-          command: "cargo +nightly fmt -- --config-path .circleci/fmt.toml --check"
+          command: cargo +nightly fmt -- --config-path .circleci/fmt.toml --check
 
   coverage:
     docker:
@@ -20,10 +20,10 @@ jobs:
       - checkout
       - run:
           name: Make coverage
-          command: "coverage.sh -i './tests/**' -i './src/components/**'"
+          command: coverage.sh -i './tests/**' -i './src/components/**'
       - run:
           name: Upload Coverage Result To Coveralls
-          command: "coveralls circleci -r yew-reactor -D target -t $COVERALLS_REPO_TOKEN target/coverage/coveralls.json"
+          command: coveralls circleci -r yew-reactor -D target -t $COVERALLS_REPO_TOKEN target/coverage/coveralls.json
       - store_artifacts:
           path: target/coverage
 
@@ -33,8 +33,11 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Run tests
-          command: "CARGO_NET_GIT_FETCH_WITH_CLI=true cargo test"
+          name: Run unit tests
+          command: CARGO_NET_GIT_FETCH_WITH_CLI=true cargo test --lib
+      - run:
+          name: Run Cucumber tests
+          command: CARGO_NET_GIT_FETCH_WITH_CLI=true cargo test --test cucumber --features task-spawner
 
 workflows:
   coverage:
