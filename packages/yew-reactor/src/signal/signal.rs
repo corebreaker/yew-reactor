@@ -27,6 +27,10 @@ impl<T: 'static> Signal<T> {
         // no-coverage:stop
     }
 
+    pub fn id(&self) -> String {
+        self.id.to_string()
+    }
+
     pub fn runtime(&self) -> Arc<Runtime> {
         Arc::clone(&self.runtime)
     }
@@ -206,7 +210,7 @@ mod tests {
     use crate::signal::tests::create_runtime;
 
     impl<T: 'static> Signal<T> {
-        pub(in super::super) fn id(&self) -> SignalId {
+        pub(in super::super) fn signal_id(&self) -> SignalId {
             self.id
         }
     }

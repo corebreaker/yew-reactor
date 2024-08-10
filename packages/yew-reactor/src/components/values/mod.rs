@@ -1,7 +1,7 @@
 mod item;
-mod message;
-mod properties;
 mod state;
-mod value;
+mod message;
+mod component;
+mod properties;
 
-pub use self::{item::Item, value::Value};
+pub use self::{item::Item, component::Value};
