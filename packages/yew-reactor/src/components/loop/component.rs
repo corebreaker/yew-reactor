@@ -9,8 +9,8 @@ pub enum Msg {
 
 #[derive(Properties)]
 pub struct Props<C: KeyedCollection> {
-    pub(crate) values:   Signal<C>,
-    pub(crate) children: Children,
+    pub values:   Signal<C>,
+    pub children: Children,
 }
 
 impl<C: KeyedCollection> PartialEq for Props<C> {

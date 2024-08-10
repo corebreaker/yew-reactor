@@ -6,12 +6,12 @@ use std::sync::Arc;
 #[derive(Properties, Default)]
 pub struct Props {
     #[prop_or_default]
-    pub(crate) with_defer_runner: Option<Arc<dyn DeferRunner>>,
+    pub with_defer_runner: Option<Arc<dyn DeferRunner>>,
 
     #[prop_or_default]
-    pub(crate) with_spawn_generator: Option<Arc<dyn SpawnGenerator>>,
+    pub with_spawn_generator: Option<Arc<dyn SpawnGenerator>>,
 
-    pub(crate) children: Children,
+    pub children: Children,
 }
 
 impl Eq for Props {}

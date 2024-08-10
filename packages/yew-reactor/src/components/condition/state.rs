@@ -8,8 +8,8 @@ pub enum Message {
 
 #[derive(Properties)]
 pub struct Props<T: AsBool + 'static> {
-    pub(crate) when:     Signal<T>,
-    pub(crate) children: Html,
+    pub when:     Signal<T>,
+    pub children: Html,
 }
 
 impl<T: AsBool + 'static> PartialEq for Props<T> {
