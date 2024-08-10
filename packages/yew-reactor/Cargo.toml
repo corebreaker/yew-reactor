@@ -32,3 +32,4 @@ futures-test = "0.3.30"
 [features]
 default = []
 task-spawner = ["dep:tokio"]
+wasm = ["uuid/std", "uuid/js"]

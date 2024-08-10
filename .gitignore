@@ -19,5 +19,5 @@ Cargo.lock
 # Profiling
 *.profraw
 
-# Ignore all compiled files
-examples/*/dist/
+# Ignore all compiled files for examples
+examples/example-*/dist/
