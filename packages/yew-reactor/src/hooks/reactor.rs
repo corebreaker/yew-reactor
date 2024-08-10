@@ -1,5 +1,4 @@
-use super::super::reactor::ReactorDataContext;
-use crate::signal::Runtime;
+use crate::{signal::Runtime, components::reactor::ReactorDataContext};
 use yew::{hook, use_context};
 use std::sync::Arc;
 

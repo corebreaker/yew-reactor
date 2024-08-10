@@ -1,4 +1,4 @@
-use super::super::r#loop::{LoopDataContext, LoopVar};
+use crate::components::r#loop::{LoopDataContext, LoopVar};
 use yew::{hook, use_context};
 
 #[hook]

@@ -25,6 +25,7 @@ mod tests {
         Arc,
     };
 
+    #[test]
     fn test_spawn() {
         let value = Arc::new(AtomicUsize::new(0));
 

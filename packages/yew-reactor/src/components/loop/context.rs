@@ -33,7 +33,7 @@ impl<T: Clone + Default + 'static> LoopVar<T> {
 }
 
 #[derive(Clone)]
-pub(in super::super) struct LoopDataContext<T: 'static> {
+pub(crate) struct LoopDataContext<T: 'static> {
     signal: Signal<Option<T>>,
 }
 
@@ -45,7 +45,7 @@ impl<T: Clone + Default + PartialEq + 'static> LoopDataContext<T> {
     }
 
     #[allow(dead_code)]
-    pub(in super::super) fn get_var(&self) -> LoopVar<T> {
+    pub(crate) fn get_var(&self) -> LoopVar<T> {
         LoopVar::new(Some(self.signal.clone()))
     }
 }

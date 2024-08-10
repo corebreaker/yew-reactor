@@ -2,7 +2,7 @@ mod component;
 mod context;
 mod element;
 
-pub(super) use context::LoopDataContext;
+pub(crate) use context::LoopDataContext;
 
 pub use self::{
     component::For,

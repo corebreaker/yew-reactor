@@ -1,9 +1,8 @@
 mod condition;
-mod r#loop;
-mod reactor;
 mod values;
 
-pub mod hooks;
+pub(crate) mod r#loop;
+pub(crate) mod reactor;
 
 pub use self::{
     condition::{IfTrue, IfFalse, AsBool},
