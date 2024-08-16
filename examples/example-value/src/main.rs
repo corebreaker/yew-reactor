@@ -3,7 +3,6 @@ mod component;
 use component::*;
 use yew_reactor::{components::{Reactor, Value}, hooks::use_reactor};
 use yew::{prelude::*, Renderer};
-use gloo_console as console;
 
 #[function_component]
 fn App() -> Html {
