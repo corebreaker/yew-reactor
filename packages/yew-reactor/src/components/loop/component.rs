@@ -4,7 +4,7 @@ use yew::{Component, Context, Html, Properties, Children, html};
 use std::marker::PhantomData;
 
 pub enum Msg {
-    SetValues(Vec<Html>),
+    Update,
 }
 
 #[derive(Properties)]
@@ -22,9 +22,9 @@ impl<C: KeyedCollection> PartialEq for Props<C> {
 impl<C: KeyedCollection> Eq for Props<C> {}
 
 pub struct For<T: Clone + PartialEq + Default + 'static, C: KeyedCollection> {
+    collection: Signal<C>,
     values: Vec<Html>,
     t:      PhantomData<T>,
-    c:      PhantomData<C>,
 }
 
 impl<T: Default + Clone + PartialEq + 'static, C: KeyedCollection<Value = T>> For<T, C> {
@@ -55,25 +55,46 @@ impl<T: Default + Clone + PartialEq + 'static, C: KeyedCollection<Value = T>> Co
     type Properties = Props<C>;
 
     fn create(ctx: &Context<Self>) -> Self {
+        let collection = ctx.props().values.clone();
+        let values = Self::make_values(&ctx.props().children, collection.clone());
+
+        {
+            let scope = ctx.link().clone();
+            let values = collection.clone();
+
+            values.runtime().create_effect(move || {
+                values.with(|_| ());
+                scope.send_message(Msg::Update);
+            });
+        }
+
         Self {
-            values: Self::make_values(&ctx.props().children, ctx.props().values.clone()),
-            t:      PhantomData,
-            c:      PhantomData,
+            values,
+            collection,
+            t: PhantomData,
         }
     }
 
-    fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
+    fn update(&mut self, ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
-            Msg::SetValues(vals) => {
-                self.values = vals;
+            Msg::Update => {
+                self.values = Self::make_values(&ctx.props().children, self.collection.clone());
+
                 true
             }
         }
     }
 
-    fn changed(&mut self, ctx: &Context<Self>, _old_props: &Self::Properties) -> bool {
-        let values = Self::make_values(&ctx.props().children, ctx.props().values.clone());
-        Component::update(self, ctx, Msg::SetValues(values))
+    fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
+        if ctx.props().values != old_props.values {
+            ctx.props().values.link_to(&self.collection);
+        }
+
+        if ctx.props().children != old_props.children {
+            Component::update(self, ctx, Msg::Update)
+        } else {
+            false
+        }
     }
 
     fn view(&self, _ctx: &Context<Self>) -> Html {

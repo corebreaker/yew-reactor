@@ -1,7 +1,8 @@
 mod component;
+mod simple;
 
 use component::*;
-use yew_reactor::{components::{Reactor, Value}, hooks::use_reactor};
+use yew_reactor::{components::Reactor, hooks::use_reactor};
 use yew::{prelude::*, Renderer};
 use gloo_console as console;
 
@@ -13,7 +14,7 @@ fn App() -> Html {
         let counter = state.clone();
         move |_| {
             let v = counter.get() + 1;
-
+            console::log!(format!("Value set from callback: {v}"));
             (*counter).set(v);
         }
     };
@@ -34,17 +35,7 @@ fn App() -> Html {
             </Block>
 
             <Block>
-                <div style="padding: 5px">
-                    <p class="tw-text-indigo-800">
-                        { "Value:" }
-                        <Value<usize>
-                            signal={(*state).clone()}
-                            class="tw-text-fuchsia-500 tw-font-bold tw-ml-3"
-                            element="span"
-                        />
-                    </p>
-                </div>
-
+                <simple::Simple value={(*state).clone()}/>
             </Block>
         </Container>
     }
@@ -56,7 +47,7 @@ fn Rt() -> Html {
         <Reactor>
             <div class="tw-mx-auto">
                 <h1 class="tw-text-4xl tw-font-bold tw-text-center tw-mb-8 tw-text-indigo-300">
-                    {"Example of use of the component `Value`"}
+                    {"Example of use of signals"}
                 </h1>
             </div>
             <div class="tw-relative tw-overflow-auto tw-p-8">

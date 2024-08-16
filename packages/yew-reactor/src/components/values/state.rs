@@ -69,14 +69,6 @@ impl<P: ValueProps + 'static, C: Component<Properties = P, Message = Message>> V
         }
     }
 
-    pub(super) fn value(&self) -> Option<&String> {
-        self.value.as_ref()
-    }
-
-    pub(super) fn set_value(&mut self, value: Option<String>) {
-        self.value = value;
-    }
-
     pub(super) fn changed(&mut self, ctx: &Context<C>, old_props: &P) -> bool {
         let props = ctx.props();
         let mut changed = false;

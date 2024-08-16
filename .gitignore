@@ -21,3 +21,7 @@ Cargo.lock
 
 # Ignore all compiled files for examples
 examples/example-*/dist/
+
+# Ignore all NodeJS package files for examples
+examples/example-*/styles/node_modules/
+examples/example-*/styles/package-lock.json

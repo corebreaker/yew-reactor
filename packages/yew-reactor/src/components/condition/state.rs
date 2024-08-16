@@ -23,7 +23,6 @@ impl<T: AsBool + 'static> Eq for Props<T> {}
 pub struct ConditionState<T: AsBool + 'static, C: Component<Message = Message, Properties = Props<T>>> {
     condition: bool,
     signal:    Signal<T>,
-    ty:        PhantomData<T>,
     c:         PhantomData<C>,
 }
 
@@ -45,7 +44,6 @@ impl<T: AsBool, C: Component<Message = Message, Properties = Props<T>>> Conditio
         Self {
             condition: false,
             signal,
-            ty: PhantomData,
             c: PhantomData,
         }
     }
