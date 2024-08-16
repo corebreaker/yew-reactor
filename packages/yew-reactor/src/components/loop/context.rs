@@ -1,21 +1,33 @@
-use super::element::LoopElement;
-use crate::signal::Signal;
+use super::{super::ReactorContext, element::LoopElement};
+use crate::signal::{Signal, Runtime};
 use yew::{
     html::{Scope, AnyScope},
     Component,
     Context,
 };
 
+use std::sync::Arc;
+
 #[derive(Clone, Default, PartialEq, Eq, Debug)]
 pub struct LoopVar<T: Clone + Default + 'static> {
+    rt: Arc<Runtime>,
     value: Option<Signal<Option<T>>>,
 }
 
 impl<T: Clone + Default + 'static> LoopVar<T> {
-    pub(in super::super) fn new(value: Option<Signal<Option<T>>>) -> Self {
+    pub(in super::super) fn new(value: Option<Signal<Option<T>>>, rt: Option<Arc<Runtime>>) -> Self {
+        let rt = rt
+            .or_else(|| value.as_ref().map(|v| v.runtime()))
+            .unwrap_or_else(Runtime::new);
+
         Self {
+            rt,
             value,
         }
+    }
+
+    pub fn runtime(&self) -> Arc<Runtime> {
+        Arc::clone(&self.rt)
     }
 
     pub fn with_value<R, F>(&self, f: F) -> R
@@ -46,7 +58,7 @@ impl<T: Clone + Default + PartialEq + 'static> LoopDataContext<T> {
 
     #[allow(dead_code)]
     pub(crate) fn get_var(&self) -> LoopVar<T> {
-        LoopVar::new(Some(self.signal.clone()))
+        LoopVar::new(Some(self.signal.clone()), Some(self.signal.runtime()))
     }
 }
 
@@ -71,7 +83,7 @@ impl<C: Component> LoopContext for Context<C> {
 
 impl<C: Component> LoopContext for Scope<C> {
     fn get_loop_var<T: Clone + Default + PartialEq + 'static>(&self) -> LoopVar<T> {
-        LoopVar::new(get_loop_var_from_scope(self))
+        LoopVar::new(get_loop_var_from_scope(self), self.runtime())
     }
 }
 
