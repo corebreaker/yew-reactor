@@ -37,7 +37,7 @@ impl<P: ValueProps + 'static, C: Component<Properties = P, Message = Message>> V
         }
 
         if let Some(prop_class_signal) = props.class_signal() {
-            class_signal.link_to(&prop_class_signal);
+            prop_class_signal.link_to(&class_signal);
         }
 
         classes.register_class_signal(class_signal.clone());
