@@ -1,0 +1,13 @@
+[package]
+name = "compare-loops"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+yew = { workspace = true }
+uuid = { workspace = true }
+gloo-console = { workspace = true }
+instant = { workspace = true }
+lipsum = "0.9.1"
+rand = "0.9.0-alpha.2"
+yew-reactor = { path = "../../packages/yew-reactor", package = "yew-reactor", features = ["wasm", "loop_duration"] }

@@ -1,10 +1,14 @@
 use super::{state::ValueState, message::Message, properties::ValueProps};
 use crate::{signal::Signal, css::CssClasses};
 use yew::{AttrValue, Component, Context, Html, Properties};
+use std::rc::Rc;
 
 #[derive(Properties)]
 pub struct Props<T: ToString + 'static> {
     pub signal: Signal<T>,
+
+    #[prop_or_else(|| Rc::new(|v: &T| v.to_string()))]
+    pub format: Rc<dyn for<'a> Fn(&'a T) -> String>,
 
     #[prop_or_default]
     pub class: Option<AttrValue>,
@@ -61,13 +65,15 @@ impl<T: ToString + 'static> Component for Value<T> {
     fn create(ctx: &Context<Self>) -> Self {
         let state = ValueState::create(ctx.props().signal.runtime(), ctx);
         let signal = ctx.props().signal.clone();
+        let format_fn = Rc::clone(&ctx.props().format);
 
         {
+            let format_fn = Rc::clone(&format_fn);
             let scope = ctx.link().clone();
             let signal = signal.clone();
 
             signal.runtime().create_effect(move || {
-                scope.send_message(Message::SetValue(Some(signal.with(|v| v.to_string()))));
+                scope.send_message(Message::SetValue(Some(signal.with(format_fn.as_ref()))));
             });
         }
 

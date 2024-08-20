@@ -21,7 +21,8 @@ backtrace = "0.3.73"
 futures = "0.3.30"
 itertools = "0.13.0"
 tokio = { version = "1.39.2", features = ["full"], optional = true }
-uuid = { version = "1.10.0", features = ["atomic", "v4", "v7", "serde"] }
+instant = { workspace = true, optional = true }
+uuid = { workspace = true }
 yew = { workspace = true }
 
 [dev-dependencies]
@@ -33,3 +34,4 @@ futures-test = "0.3.30"
 default = []
 task-spawner = ["dep:tokio"]
 wasm = ["uuid/std", "uuid/js"]
+loop_duration = ["dep:instant"]

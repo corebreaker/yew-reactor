@@ -11,6 +11,10 @@ pub enum Msg {
 pub struct Props<C: KeyedCollection> {
     pub values:   Signal<C>,
     pub children: Children,
+
+    #[cfg(feature = "loop_duration")]
+    #[prop_or_default]
+    pub duration: Option<Signal<crate::duration::DurationInfo>>,
 }
 
 impl<C: KeyedCollection> PartialEq for Props<C> {
@@ -97,11 +101,25 @@ impl<T: Default + Clone + PartialEq + 'static, C: KeyedCollection<Value = T>> Co
         }
     }
 
-    fn view(&self, _ctx: &Context<Self>) -> Html {
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        #[cfg(feature = "loop_duration")]
+        if let Some(duration) = ctx.props().duration.as_ref().cloned() {
+            duration.with(|d| d.begin());
+        }
+
         html! {
             <>
                 {self.values.clone()}
             </>
+        }
+    }
+
+    #[cfg(feature = "loop_duration")]
+    fn rendered(&mut self, ctx: &Context<Self>, _first_render: bool) {
+        if let Some(duration) = ctx.props().duration.as_ref().cloned() {
+            duration.update(|d| {
+                d.end();
+            })
         }
     }
 }

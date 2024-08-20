@@ -8,3 +8,6 @@ pub mod action;
 pub mod signal;
 pub mod spawner;
 pub mod components;
+
+#[cfg(feature = "loop_duration")]
+pub mod duration;

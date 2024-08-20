@@ -67,10 +67,10 @@ fn App() -> Html {
             <Block>
                 <Button action={set_class_underline_action} label={"Underline"} />
                 <Button action={set_class_overline_action} label={"Overline"} />
-                <div class="tw-border tw-border-indigo-800 tw-w-0"/>
+                <Separator/>
                 <Button action={add_border_action} label={"Add border"} />
                 <Button action={remove_border_action} label={"Remove border"} />
-                <div class="tw-border tw-border-indigo-800 tw-w-0"/>
+                <Separator/>
                 <Button action={inc_action} label={"+1"} />
                 <Button action={reset_action} label={"Reset"} />
             </Block>
