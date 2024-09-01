@@ -17,7 +17,8 @@ pub struct SignalMap<S: 'static, R: 'static> {
 
 impl<S: 'static, R: 'static> SignalMap<S, R> {
     pub(super) fn new<F>(runtime: Arc<Runtime>, id: SignalId, f: F) -> Self
-        where for<'a> F: Fn(&'a S) -> R + 'static {
+    where
+        for<'a> F: Fn(&'a S) -> R + 'static, {
         runtime.inc_signal_ref(id);
 
         Self {
@@ -66,7 +67,10 @@ impl<S: 'static, R: 'static> SignalMap<S, R> {
     }
 
     pub fn with_another<XS, XR, O, F>(&self, other: SignalMap<XS, XR>, f: F) -> O
-        where XS: 'static, XR: 'static, F: FnOnce(&R, &XR) -> O {
+    where
+        XS: 'static,
+        XR: 'static,
+        F: FnOnce(&R, &XR) -> O, {
         let other = other.clone();
 
         self.with(move |v| other.with(|o| f(v, o)))

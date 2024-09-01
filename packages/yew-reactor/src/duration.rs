@@ -1,16 +1,19 @@
 use instant::{Duration, Instant};
-use std::{fmt::{Display, Formatter, Result as FmtResult}, cell::RefCell};
+use std::{
+    fmt::{Display, Formatter, Result as FmtResult},
+    cell::RefCell,
+};
 
 #[derive(Debug, Clone)]
 pub struct DurationInfo {
-    start: RefCell<Instant>,
+    start:    RefCell<Instant>,
     duration: Duration,
 }
 
 impl DurationInfo {
     pub fn new() -> Self {
         Self {
-            start: RefCell::new(Instant::now()),
+            start:    RefCell::new(Instant::now()),
             duration: Duration::default(),
         }
     }

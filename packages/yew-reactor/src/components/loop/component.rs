@@ -27,8 +27,8 @@ impl<C: KeyedCollection> Eq for Props<C> {}
 
 pub struct For<T: Clone + PartialEq + Default + 'static, C: KeyedCollection> {
     collection: Signal<C>,
-    values: Vec<Html>,
-    t:      PhantomData<T>,
+    values:     Vec<Html>,
+    t:          PhantomData<T>,
 }
 
 impl<T: Default + Clone + PartialEq + 'static, C: KeyedCollection<Value = T>> For<T, C> {

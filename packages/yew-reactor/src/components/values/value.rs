@@ -54,7 +54,7 @@ impl<T: ToString + 'static> PartialEq for Props<T> {
 impl<T: ToString + 'static> Eq for Props<T> {}
 
 pub struct Value<T: ToString + 'static> {
-    state: ValueState<Props<T>, Self>,
+    state:  ValueState<Props<T>, Self>,
     signal: Signal<T>,
 }
 

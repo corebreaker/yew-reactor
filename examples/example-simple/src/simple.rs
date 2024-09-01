@@ -14,7 +14,7 @@ pub struct Props {
 #[derive(Clone, Default, PartialEq)]
 pub struct Simple {
     value: usize,
-    sig: Option<Signal<usize>>,
+    sig:   Option<Signal<usize>>,
 }
 
 impl Component for Simple {
@@ -40,7 +40,7 @@ impl Component for Simple {
         console::log!(format!("Creating Value {id:?}"));
         Self {
             value: ctx.props().value.get(),
-            sig: Some(ctx.props().value.clone()),
+            sig:   Some(ctx.props().value.clone()),
         }
     }
 

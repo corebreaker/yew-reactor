@@ -1,16 +1,18 @@
 mod component;
 
 use component::*;
-use yew_reactor::{components::{Reactor, For, LoopValue}, hooks::use_reactor};
+use yew_reactor::{
+    components::{Reactor, For, LoopValue},
+    hooks::use_reactor,
+};
 use yew::{prelude::*, Renderer};
 
 #[function_component]
 fn App() -> Html {
-    let init = [
-        "Line L001",
-        "Line L002",
-        "Line L003",
-    ].into_iter().map(String::from).collect::<Vec<_>>();
+    let init = ["Line L001", "Line L002", "Line L003"]
+        .into_iter()
+        .map(String::from)
+        .collect::<Vec<_>>();
 
     let rt = use_reactor();
     let state = {

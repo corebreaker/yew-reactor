@@ -1,4 +1,9 @@
-use super::{super::{r#loop::LoopVar, LoopContext}, state::ValueState, message::Message, properties::ValueProps};
+use super::{
+    super::{r#loop::LoopVar, LoopContext},
+    state::ValueState,
+    message::Message,
+    properties::ValueProps,
+};
 use crate::{signal::Signal, css::CssClasses};
 use yew::{AttrValue, Component, Context, Html, Properties};
 
@@ -64,9 +69,9 @@ impl<T: ToString + Clone + Default + PartialEq + 'static> Component for LoopValu
             let value = value.clone();
 
             value.runtime().create_effect(move || {
-                scope.send_message(Message::SetValue(Some(value.with_value(|v| {
-                    v.as_ref().map(|v| v.to_string()).unwrap_or_default()
-                }))));
+                scope.send_message(Message::SetValue(Some(
+                    value.with_value(|v| v.as_ref().map(|v| v.to_string()).unwrap_or_default()),
+                )));
             });
         }
 

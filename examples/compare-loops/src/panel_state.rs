@@ -1,13 +1,16 @@
 use super::{data::DataList, button_group::ButtonGroup, action_kind::ActionKind};
-use yew_reactor::{signal::{Runtime, Signal}, duration::DurationInfo};
+use yew_reactor::{
+    signal::{Runtime, Signal},
+    duration::DurationInfo,
+};
 use std::sync::Arc;
 
 pub struct PanelState {
-    name: String,
-    runtime: Arc<Runtime>,
-    list: Signal<DataList>,
+    name:     String,
+    runtime:  Arc<Runtime>,
+    list:     Signal<DataList>,
     duration: Signal<DurationInfo>,
-    group: Signal<ButtonGroup>,
+    group:    Signal<ButtonGroup>,
     disabled: Signal<bool>,
 }
 
@@ -36,22 +39,20 @@ impl PanelState {
                     let sz = list.with(|list| list.len());
                     let selection = group.selection();
 
-                    disabled.update_if(|disabled| {
-                        match(selection, *disabled) {
-                            (None, false) => {
-                                *disabled = true;
-                                true
-                            }
-                            (Some(ActionKind::Del(n)), false) if sz <= n => {
-                                *disabled = true;
-                                true
-                            }
-                            (_, true) => {
-                                *disabled = false;
-                                true
-                            }
-                            _ => false,
+                    disabled.update_if(|disabled| match (selection, *disabled) {
+                        (None, false) => {
+                            *disabled = true;
+                            true
                         }
+                        (Some(ActionKind::Del(n)), false) if sz <= n => {
+                            *disabled = true;
+                            true
+                        }
+                        (_, true) => {
+                            *disabled = false;
+                            true
+                        }
+                        _ => false,
                     });
                 });
             }

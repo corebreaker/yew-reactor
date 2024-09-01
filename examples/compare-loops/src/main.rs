@@ -1,11 +1,11 @@
-mod button_group;
-mod component;
-mod panels;
-mod data;
-mod card;
-mod app;
-mod panel_state;
 mod action_kind;
+mod app;
+mod button_group;
+mod card;
+mod component;
+mod data;
+mod panel_state;
+mod panels;
 
 use yew_reactor::components::Reactor;
 use yew::{prelude::*, Renderer};

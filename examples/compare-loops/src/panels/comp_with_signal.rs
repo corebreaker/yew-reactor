@@ -5,7 +5,7 @@ use crate::data::Record;
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
-    pub values: Signal<DataList>,
+    pub values:   Signal<DataList>,
     pub duration: Signal<DurationInfo>,
 }
 
@@ -31,12 +31,12 @@ impl Component for Panel {
         let props = ctx.props();
 
         html! {
-            <ul>
-                <For<Record, DataList> values={props.values.clone()} duration={props.duration.clone()}>
-                    <LoopCard />
-                </For<Record, DataList>>
-            </ul>
-       }
+             <ul>
+                 <For<Record, DataList> values={props.values.clone()} duration={props.duration.clone()}>
+                     <LoopCard />
+                 </For<Record, DataList>>
+             </ul>
+        }
     }
 
     fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {

@@ -28,7 +28,7 @@ impl Debug for Gender {
 impl PartialEq for Gender {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Self::Male, Self::Male)|(Self::Female, Self::Female) => true,
+            (Self::Male, Self::Male) | (Self::Female, Self::Female) => true,
             _ => false,
         }
     }

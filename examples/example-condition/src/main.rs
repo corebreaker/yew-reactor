@@ -1,7 +1,10 @@
 mod component;
 
 use component::*;
-use yew_reactor::{components::{Reactor, IfTrue, IfFalse}, hooks::use_reactor};
+use yew_reactor::{
+    components::{Reactor, IfTrue, IfFalse},
+    hooks::use_reactor,
+};
 use yew::{prelude::*, Renderer};
 
 #[function_component]

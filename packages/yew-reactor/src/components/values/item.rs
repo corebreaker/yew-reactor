@@ -56,7 +56,7 @@ impl<C: KeyedCollection + 'static> PartialEq for Props<C> {
 impl<C: KeyedCollection + 'static> Eq for Props<C> {}
 
 pub struct Item<T: ToString + 'static, C: KeyedCollection<Value = T> + 'static> {
-    state: ValueState<Props<C>, Self>,
+    state:  ValueState<Props<C>, Self>,
     values: Signal<C>,
     signal: Signal<Option<String>>,
 }

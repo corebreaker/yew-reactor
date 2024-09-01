@@ -1,7 +1,10 @@
 mod component;
 
 use component::*;
-use yew_reactor::{components::{Reactor, Value}, hooks::use_reactor};
+use yew_reactor::{
+    components::{Reactor, Value},
+    hooks::use_reactor,
+};
 use yew::{prelude::*, Renderer};
 use std::sync::Arc;
 

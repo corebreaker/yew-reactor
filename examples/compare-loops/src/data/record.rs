@@ -5,12 +5,12 @@ use uuid::{Uuid, Timestamp, NoContext};
 
 #[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub struct Record {
-    id: Uuid,
-    first_name: String,
-    last_name: String,
-    gender: Gender,
-    age: u8,
-    occupation: String,
+    id:          Uuid,
+    first_name:  String,
+    last_name:   String,
+    gender:      Gender,
+    age:         u8,
+    occupation:  String,
     description: String,
 }
 
@@ -42,7 +42,10 @@ impl Record {
     }
 
     pub fn with_id(self, id: Uuid) -> Self {
-        Self { id, ..self }
+        Self {
+            id,
+            ..self
+        }
     }
 
     pub fn id(&self) -> Uuid {

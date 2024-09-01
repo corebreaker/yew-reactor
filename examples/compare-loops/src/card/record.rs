@@ -6,9 +6,7 @@ pub struct Props {
     pub value: Record,
 }
 
-pub struct RecCard {
-
-}
+pub struct RecCard {}
 
 impl Component for RecCard {
     type Message = ();

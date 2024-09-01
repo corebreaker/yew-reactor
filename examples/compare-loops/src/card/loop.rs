@@ -8,7 +8,7 @@ pub enum Msg {
 }
 
 pub struct LoopCard {
-    record: Record
+    record: Record,
 }
 
 impl Component for LoopCard {
@@ -28,7 +28,7 @@ impl Component for LoopCard {
         });
 
         LoopCard {
-            record: Record::default()
+            record: Record::default(),
         }
     }
 

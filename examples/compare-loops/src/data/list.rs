@@ -2,20 +2,23 @@ use super::Record;
 use yew_reactor::signal::KeyedCollection;
 use uuid::{NoContext, Timestamp, Uuid};
 use rand::{seq::IteratorRandom, Rng};
-use std::{fmt::{Display, Formatter, Result as FmtResult}, collections::HashMap};
+use std::{
+    fmt::{Display, Formatter, Result as FmtResult},
+    collections::HashMap,
+};
 
 #[derive(Debug, Clone, Default)]
 pub struct DataList {
-    id: Uuid,
-    values: Vec<Record>,
+    id:      Uuid,
+    values:  Vec<Record>,
     indexes: HashMap<Uuid, usize>,
 }
 
 impl DataList {
     pub fn new() -> Self {
         Self {
-            id: Uuid::new_v7(Timestamp::now(NoContext)),
-            values: vec![],
+            id:      Uuid::new_v7(Timestamp::now(NoContext)),
+            values:  vec![],
             indexes: HashMap::new(),
         }
     }
@@ -163,7 +166,7 @@ impl KeyedCollection for DataList {
         self.values.get(*idx)
     }
 
-    fn iter_keys(&self) -> impl Iterator<Item=String> {
+    fn iter_keys(&self) -> impl Iterator<Item = String> {
         self.ids().map(|id| id.to_string())
     }
 }

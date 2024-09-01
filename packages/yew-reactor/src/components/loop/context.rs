@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 #[derive(Clone, Default, PartialEq, Eq, Debug)]
 pub struct LoopVar<T: Clone + Default + 'static> {
-    rt: Arc<Runtime>,
+    rt:    Arc<Runtime>,
     value: Option<Signal<Option<T>>>,
 }
 

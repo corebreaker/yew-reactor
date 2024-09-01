@@ -88,15 +88,14 @@ pub fn panel(props: &Props) -> Html {
                     { subtitle.clone() }
                 </h2>
             }
-        },
+        }
         None => {
             html! {}
-        },
+        }
     };
 
-    let format: Rc<dyn for<'a> Fn(&'a DataList) -> String> = Rc::new(|list| {
-        format!("Rendered {} in", list.to_string())
-    });
+    let format: Rc<dyn for<'a> Fn(&'a DataList) -> String> =
+        Rc::new(|list| format!("Rendered {} in", list.to_string()));
 
     html! {
         <div class={ main_class } title={ name.clone() }>

@@ -29,7 +29,7 @@ pub struct Props {
 
 pub struct Button {
     disabled: bool,
-    css: String,
+    css:      String,
 }
 
 impl Component for Button {
@@ -75,14 +75,12 @@ impl Component for Button {
         if let Some(group) = ctx.props().group.as_ref().cloned() {
             let classes = classes.clone();
             if let Some(kind) = ctx.props().kind {
-                Arc::clone(&runtime).create_effect(move || {
-                    match group.with(|group| group.selection()) {
-                        Some(selection) if selection == kind => {
-                            setup_css_for_selected(classes.clone());
-                        }
-                        _ => {
-                            setup_css_for_unselected(classes.clone());
-                        }
+                Arc::clone(&runtime).create_effect(move || match group.with(|group| group.selection()) {
+                    Some(selection) if selection == kind => {
+                        setup_css_for_selected(classes.clone());
+                    }
+                    _ => {
+                        setup_css_for_unselected(classes.clone());
                     }
                 });
             }
@@ -140,13 +138,11 @@ impl Component for Button {
                     }
                     Some(group) => {
                         if let Some(kind) = props.kind {
-                            group.update_if(|group| {
-                                match group.selection() {
-                                    Some(selection) if selection == kind => false,
-                                    _ => {
-                                        group.select(kind);
-                                        true
-                                    }
+                            group.update_if(|group| match group.selection() {
+                                Some(selection) if selection == kind => false,
+                                _ => {
+                                    group.select(kind);
+                                    true
                                 }
                             });
                         }
@@ -191,7 +187,7 @@ fn setup_css_for_disabled(classes: CssClasses) {
         "tw-shadow-white/50",
         "hover:tw-shadow-indigo-700/50",
         "active:tw-shadow-white/50",
-   ]);
+    ]);
 
     classes.extend(vec![
         "tw-shadow-xs",
@@ -211,11 +207,7 @@ fn setup_css_for_selected(classes: CssClasses) {
         "active:tw-shadow-white/50",
     ]);
 
-    classes.extend(vec![
-        "tw-bg-indigo-200",
-        "tw-shadow-white/50",
-        "tw-cursor-not-allowed",
-    ]);
+    classes.extend(vec!["tw-bg-indigo-200", "tw-shadow-white/50", "tw-cursor-not-allowed"]);
 }
 
 fn setup_css_for_unselected(classes: CssClasses) {

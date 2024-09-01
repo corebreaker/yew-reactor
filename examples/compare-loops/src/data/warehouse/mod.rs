@@ -1,6 +1,6 @@
-mod names;
-mod males;
 mod females;
+mod males;
+mod names;
 mod occupations;
 
 pub(super) struct Warehouse;

@@ -3,7 +3,7 @@ use yew::{Properties, Callback, Html, html, function_component};
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
     pub action: Callback<()>,
-    pub label: String,
+    pub label:  String,
 }
 
 #[function_component(Button)]

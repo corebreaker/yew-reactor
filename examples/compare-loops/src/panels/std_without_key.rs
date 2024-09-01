@@ -10,7 +10,7 @@ pub enum Msg {
 
 #[derive(Properties, Clone, PartialEq)]
 pub struct Props {
-    pub values: Signal<DataList>,
+    pub values:   Signal<DataList>,
     pub duration: Signal<DurationInfo>,
 }
 
@@ -36,7 +36,7 @@ impl Component for Panel {
         });
 
         Self {
-            list: list.get(),
+            list: list.get()
         }
     }
 
@@ -58,10 +58,10 @@ impl Component for Panel {
         });
 
         html! {
-            <ul>
-                { for list }
-            </ul>
-       }
+             <ul>
+                 { for list }
+             </ul>
+        }
     }
 
     fn rendered(&mut self, ctx: &Context<Self>, first_render: bool) {

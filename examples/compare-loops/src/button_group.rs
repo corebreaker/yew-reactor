@@ -7,7 +7,7 @@ pub struct ButtonGroup {
 impl ButtonGroup {
     pub fn new() -> Self {
         Self {
-            selection: None,
+            selection: None
         }
     }
 

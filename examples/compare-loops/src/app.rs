@@ -16,7 +16,7 @@ pub enum Msg {
 }
 
 pub struct App {
-    group: Signal<ButtonGroup>,
+    group:  Signal<ButtonGroup>,
     states: HashMap<String, Rc<PanelState>>,
 }
 

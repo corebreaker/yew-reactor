@@ -146,7 +146,8 @@ impl<T: 'static> Signal<T> {
     }
 
     pub fn create_map<R, F>(&self, f: impl Fn(&T) -> R + 'static) -> SignalMap<T, R>
-        where F: for<'a> Fn(&'a T) -> R + 'static {
+    where
+        F: for<'a> Fn(&'a T) -> R + 'static, {
         SignalMap::new(Arc::clone(&self.runtime), self.id, f)
     }
 }
