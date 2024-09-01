@@ -8,7 +8,7 @@ use yew::{
 use std::sync::Arc;
 
 #[derive(Clone, PartialEq, Eq)]
-pub(in super::super) struct ReactorDataContext {
+pub(crate) struct ReactorDataContext {
     rt: Arc<Runtime>,
 }
 
@@ -19,7 +19,7 @@ impl ReactorDataContext {
         }
     }
 
-    pub(in super::super) fn runtime(&self) -> Arc<Runtime> {
+    pub(crate) fn runtime(&self) -> Arc<Runtime> {
         Arc::clone(&self.rt)
     }
 }

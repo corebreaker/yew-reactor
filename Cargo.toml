@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 members = [
     "packages/*",
     "examples/*",
@@ -21,4 +22,7 @@ keywords = ["yew", "reactive", "web", "helper", "component"]
 categories = ["wasm", "web-programming"]
 
 [workspace.dependencies]
+gloo-console = "0.3.0"
 yew = { version = "0.21.0", features = ["csr"] }
+uuid = { version = "1.10.0", features = ["atomic", "v4", "v7", "serde"] }
+instant = { version = "0.1.13", features = ["wasm-bindgen", "now"] }

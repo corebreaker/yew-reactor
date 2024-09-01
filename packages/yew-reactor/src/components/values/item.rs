@@ -5,7 +5,6 @@ use crate::{
 };
 
 use yew::{AttrValue, Component, Context, Html, Properties};
-use std::marker::PhantomData;
 
 #[derive(Properties)]
 pub struct Props<C: KeyedCollection + 'static> {
@@ -57,9 +56,9 @@ impl<C: KeyedCollection + 'static> PartialEq for Props<C> {
 impl<C: KeyedCollection + 'static> Eq for Props<C> {}
 
 pub struct Item<T: ToString + 'static, C: KeyedCollection<Value = T> + 'static> {
-    state: ValueState<Props<C>, Self>,
-    ty:    PhantomData<T>,
-    c:     PhantomData<C>,
+    state:  ValueState<Props<C>, Self>,
+    values: Signal<C>,
+    signal: Signal<Option<String>>,
 }
 
 impl<T: ToString + 'static, C: KeyedCollection<Value = T> + 'static> Component for Item<T, C> {
@@ -68,12 +67,25 @@ impl<T: ToString + 'static, C: KeyedCollection<Value = T> + 'static> Component f
 
     fn create(ctx: &Context<Self>) -> Self {
         let props = ctx.props();
-        let state = ValueState::create(props.values.runtime(), ctx);
+        let values = props.values.clone();
+        let state = ValueState::create(values.runtime(), ctx);
+
+        let key = props.index.clone().to_string();
+        let signal = values.runtime().create_keyed_str_signal(values.clone(), &key);
+
+        {
+            let scope = ctx.link().clone();
+            let signal = signal.clone();
+
+            signal.runtime().create_effect(move || {
+                scope.send_message(Message::SetValue(signal.with(|v| v.as_ref().map(|v| v.to_string()))));
+            });
+        }
 
         Self {
             state,
-            ty: PhantomData,
-            c: PhantomData,
+            values,
+            signal,
         }
     }
 
@@ -82,29 +94,12 @@ impl<T: ToString + 'static, C: KeyedCollection<Value = T> + 'static> Component f
     }
 
     fn changed(&mut self, ctx: &Context<Self>, old_props: &Self::Properties) -> bool {
-        let props = ctx.props();
-        let coll = props.values.clone();
-        let key = props.index.clone().to_string();
-        let signal = coll.runtime().create_keyed_str_signal(coll, &key);
-        let mut changed = self.state.changed(ctx, old_props);
-
-        {
-            let value = signal.get();
-            if self.state.value() != value.as_ref() {
-                self.state.set_value(value);
-                changed = true;
-            }
+        if ctx.props().values != old_props.values {
+            self.signal.with(|_| ());
+            ctx.props().values.link_to(&self.values);
         }
 
-        {
-            let scope = ctx.link().clone();
-
-            signal.runtime().create_effect(move || {
-                scope.send_message(Message::SetValue(signal.with(|v| v.as_ref().map(|v| v.to_string()))));
-            });
-        }
-
-        changed
+        self.state.changed(ctx, old_props)
     }
 
     fn view(&self, _ctx: &Context<Self>) -> Html {

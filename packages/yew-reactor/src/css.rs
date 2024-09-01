@@ -48,9 +48,39 @@ impl CssClasses {
         });
     }
 
+    pub fn add_classes(&self, classes: &str) {
+        self.values.update(|values| {
+            for class in classes.split(" ") {
+                values.insert(class.trim().to_string());
+            }
+        });
+    }
+
+    pub fn extend<I: IntoIterator<Item = impl AsRef<str>>>(&self, iter: I) {
+        self.values.update(|values| {
+            values.extend(iter.into_iter().map(|v| v.as_ref().to_string()));
+        });
+    }
+
     pub fn remove(&self, class: &str) {
         self.values.update(|values| {
             values.remove(class);
+        });
+    }
+
+    pub fn remove_classes(&self, classes: &str) {
+        self.values.update(|values| {
+            for class in classes.split(" ") {
+                values.remove(class);
+            }
+        });
+    }
+
+    pub fn remove_from_iter<I: IntoIterator<Item = impl AsRef<str>>>(&self, iter: I) {
+        self.values.update(|values| {
+            for class in iter {
+                values.remove(class.as_ref());
+            }
         });
     }
 

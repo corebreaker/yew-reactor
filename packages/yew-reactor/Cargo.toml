@@ -14,15 +14,24 @@ readme = "../../README.md"
 [[test]]
 name = "cucumber"
 harness = false
+required-features = ["task-spawner"]
 
 [dependencies]
 backtrace = "0.3.73"
-itertools = "0.13.0"
 futures = "0.3.30"
-uuid = { version = "1.10.0", features = ["atomic", "v4", "v7", "serde"] }
-tokio = { version = "1.39.2", features = ["full"] }
+itertools = "0.13.0"
+tokio = { version = "1.39.2", features = ["full"], optional = true }
+instant = { workspace = true, optional = true }
+uuid = { workspace = true }
 yew = { workspace = true }
 
 [dev-dependencies]
 cucumber = "0.21.1"
 cucumber-trellis = { version = "0.1.4", features = ["macro"] }
+futures-test = "0.3.30"
+
+[features]
+default = []
+task-spawner = ["dep:tokio"]
+wasm = ["uuid/std", "uuid/js"]
+loop_duration = ["dep:instant"]

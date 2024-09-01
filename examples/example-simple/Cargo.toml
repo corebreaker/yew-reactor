@@ -1,0 +1,9 @@
+[package]
+name = "example-simple"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+yew = { workspace = true }
+gloo-console = { workspace = true }
+yew-reactor = { path = "../../packages/yew-reactor", package = "yew-reactor", features = ["wasm"] }

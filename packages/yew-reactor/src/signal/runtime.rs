@@ -704,7 +704,7 @@ mod tests {
         let id = SignalId::new();
         let signal = Arc::clone(&rt).make_signal::<i32>(id);
 
-        assert_eq!(signal.id(), id, "signal id should be equal to the provided id");
+        assert_eq!(signal.signal_id(), id, "signal id should be equal to the provided id");
 
         let ref_count = {
             let refs = rt.signal_refs.read().unwrap();
@@ -719,7 +719,7 @@ mod tests {
     fn _test_create_signal<T: Any + Clone + Display + Debug + PartialEq>(kind: &str, v: T) {
         let rt = create_runtime();
         let signal = Arc::clone(&rt).create_signal(v.clone());
-        let id = signal.id();
+        let id = signal.signal_id();
 
         assert_eq!(signal.get(), v.clone());
 
@@ -775,8 +775,8 @@ mod tests {
             "signal value should be equal to the initial value for linked signal"
         );
 
-        let id = signal.id();
-        let link_id = link.id();
+        let id = signal.signal_id();
+        let link_id = link.signal_id();
         let rt_links = Arc::clone(&rt);
         let links = rt_links.signal_links.read().unwrap();
         let rt_reverse = Arc::clone(&rt);
@@ -792,9 +792,9 @@ mod tests {
         let rt = create_runtime();
         let signal = Arc::clone(&rt).create_signal(42);
         let link = signal.create_link();
-        let id = rt.get_source_id(link.id());
+        let id = rt.get_source_id(link.signal_id());
 
-        assert_eq!(id, signal.id(), "linked signal id should be fetched");
+        assert_eq!(id, signal.signal_id(), "linked signal id should be fetched");
     }
 
     #[test]
@@ -821,8 +821,8 @@ mod tests {
         let rt = create_runtime();
         let dest_signal = Arc::clone(&rt).create_signal(42);
         let src_signal = Arc::clone(&rt).create_signal(43);
-        let id = src_signal.id();
-        let link_id = dest_signal.id();
+        let id = src_signal.signal_id();
+        let link_id = dest_signal.signal_id();
 
         assert!(
             rt.signal_values.read().unwrap().contains_key(&link_id),
@@ -859,8 +859,8 @@ mod tests {
         let dest_signal = Arc::clone(&rt).create_signal(50);
         let src_signal = Arc::clone(&rt).create_signal(42);
         let link_signal = src_signal.create_link();
-        let src_id = src_signal.id();
-        let dest_id = dest_signal.id();
+        let src_id = src_signal.signal_id();
+        let dest_id = dest_signal.signal_id();
 
         println!("Source: {src_id}");
         println!("Dest: {dest_id}");
@@ -870,7 +870,7 @@ mod tests {
             "dest signal value should be found in the runtime before linking",
         );
 
-        let link_id = link_signal.id();
+        let link_id = link_signal.signal_id();
         let link_signals = vec![link_id].into_iter().collect::<HashSet<_>>();
         let before = "before linking dest to a linked signal";
         let after = "after linking dest to a linked signal";
@@ -929,7 +929,7 @@ mod tests {
     fn test_create_effect() {
         let rt = create_runtime();
         let signal = Arc::clone(&rt).create_signal(42);
-        let sig_id = signal.id();
+        let sig_id = signal.signal_id();
         let count = Arc::new(AtomicUsize::new(0));
 
         assert_eq!(count.load(Ordering::SeqCst), 0, "effect should not be run immediately");
@@ -1010,7 +1010,7 @@ mod tests {
         let rt = create_runtime();
         let sig_id = {
             let signal = Arc::clone(&rt).create_signal(42);
-            let sig_id = signal.id();
+            let sig_id = signal.signal_id();
             let count = Arc::new(AtomicUsize::new(0));
 
             {

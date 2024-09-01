@@ -1,4 +1,4 @@
-use super::{id::SignalId, Runtime};
+use super::{id::SignalId, SignalMap, Runtime};
 use std::{
     fmt::{Display, Debug, Formatter, Result as FmtResult},
     sync::atomic::{AtomicBool, Ordering},
@@ -27,6 +27,10 @@ impl<T: 'static> Signal<T> {
         // no-coverage:stop
     }
 
+    pub fn id(&self) -> String {
+        self.id.to_string()
+    }
+
     pub fn runtime(&self) -> Arc<Runtime> {
         Arc::clone(&self.runtime)
     }
@@ -39,7 +43,7 @@ impl<T: 'static> Signal<T> {
         self.untracked_update(|v| *v = value);
     }
 
-    pub fn with<R, F: FnOnce(&T) -> R>(&self, f: F) -> R {
+    pub fn with<O, F: FnOnce(&T) -> O>(&self, f: F) -> O {
         let runtime = self.runtime();
 
         // add subscribers
@@ -63,7 +67,7 @@ impl<T: 'static> Signal<T> {
         f(signal_value)
     }
 
-    pub fn with_another<X: 'static, R, F: FnOnce(&T, &X) -> R>(&self, other: Signal<X>, f: F) -> R {
+    pub fn with_another<X: 'static, O, F: FnOnce(&T, &X) -> O>(&self, other: Signal<X>, f: F) -> O {
         let other = other.clone();
 
         self.with(move |v| other.with(|o| f(v, o)))
@@ -140,15 +144,21 @@ impl<T: 'static> Signal<T> {
     pub fn create_link(&self) -> Signal<T> {
         Arc::clone(&self.runtime).create_link(self.id)
     }
+
+    pub fn create_map<R, F>(&self, f: impl Fn(&T) -> R + 'static) -> SignalMap<T, R>
+    where
+        F: for<'a> Fn(&'a T) -> R + 'static, {
+        SignalMap::new(Arc::clone(&self.runtime), self.id, f)
+    }
 }
 
-impl<T> Display for Signal<T> {
+impl<T: 'static> Display for Signal<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         write!(f, "Signal[{}]", self.id.id())
     }
 }
 
-impl<T: Debug> Debug for Signal<T> {
+impl<T: Debug + 'static> Debug for Signal<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         let id = self.id.id();
 
@@ -206,7 +216,7 @@ mod tests {
     use crate::signal::tests::create_runtime;
 
     impl<T: 'static> Signal<T> {
-        pub(in super::super) fn id(&self) -> SignalId {
+        pub(in super::super) fn signal_id(&self) -> SignalId {
             self.id
         }
     }

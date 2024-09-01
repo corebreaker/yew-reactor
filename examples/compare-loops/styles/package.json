@@ -1,0 +1,11 @@
+{
+    "dependencies": {
+        "tailwindcss": "^3.4.1",
+        "tailwindcss-animate": "^1.0.7"
+    },
+    "scripts": {
+        "build": "tailwindcss -i main.css -o tailwind.css",
+        "dist": "npm run build -- --minify",
+        "watch": "npm run build -- --watch"
+    }
+}

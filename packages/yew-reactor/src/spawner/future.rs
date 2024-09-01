@@ -64,7 +64,7 @@ mod tests {
         },
     };
 
-    #[tokio::test]
+    #[futures_test::test]
     async fn test_local_future() {
         let value = Arc::new(AtomicUsize::new(0));
 
@@ -96,7 +96,7 @@ mod tests {
         }
     }
 
-    #[tokio::test]
+    #[futures_test::test]
     async fn test_local_future_panic() {
         let value = Arc::new(AtomicUsize::new(0));
 

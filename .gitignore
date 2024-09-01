@@ -18,3 +18,10 @@ Cargo.lock
 
 # Profiling
 *.profraw
+
+# Ignore all compiled files for examples
+examples/*/dist/
+
+# Ignore all NodeJS package files for examples
+examples/*/styles/node_modules/
+examples/*/styles/package-lock.json

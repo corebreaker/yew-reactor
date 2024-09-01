@@ -37,7 +37,7 @@ impl<P: ValueProps + 'static, C: Component<Properties = P, Message = Message>> V
         }
 
         if let Some(prop_class_signal) = props.class_signal() {
-            class_signal.link_to(&prop_class_signal);
+            prop_class_signal.link_to(&class_signal);
         }
 
         classes.register_class_signal(class_signal.clone());
@@ -67,14 +67,6 @@ impl<P: ValueProps + 'static, C: Component<Properties = P, Message = Message>> V
             p: PhantomData,
             m: PhantomData,
         }
-    }
-
-    pub(super) fn value(&self) -> Option<&String> {
-        self.value.as_ref()
-    }
-
-    pub(super) fn set_value(&mut self, value: Option<String>) {
-        self.value = value;
     }
 
     pub(super) fn changed(&mut self, ctx: &Context<C>, old_props: &P) -> bool {
